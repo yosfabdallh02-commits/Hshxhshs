@@ -1,5 +1,5 @@
 -- ==========================================================
--- 🪙 MM2 UNDERGROUND COIN FARMER (V17 - ULTIMATE LOBBY FIX)
+-- 🪙 MM2 UNDERGROUND COIN FARMER (V18 - FIXED LOBBY DETECTION)
 -- ==========================================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -9,18 +9,18 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-if CoreGui:FindFirstChild("MM2_CoinFarmerV17") then
-    CoreGui.MM2_CoinFarmerV17:Destroy()
+if CoreGui:FindFirstChild("MM2_CoinFarmerV18") then
+    CoreGui.MM2_CoinFarmerV18:Destroy()
 end
 if Workspace:FindFirstChild("UndergroundPlatform") then
     Workspace.UndergroundPlatform:Destroy()
 end
 
 -- ==========================================================
--- 🎨 الواجهة (نيون بنفسجي - Delta Mobile مع إشعارات 3D)
+-- 🎨 الواجهة (نيون بنفسجي - Delta Mobile مع تحكم بالسرعة)
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
-ScreenGui.Name = "MM2_CoinFarmerV17"
+ScreenGui.Name = "MM2_CoinFarmerV18"
 ScreenGui.ResetOnSpawn = false
 
 local OpenBtn = Instance.new("TextButton", ScreenGui)
@@ -35,8 +35,8 @@ OpenBtn.Visible = false
 Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 6)
 
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 320, 0, 260)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -130)
+MainFrame.Size = UDim2.new(0, 340, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -160)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -50,7 +50,7 @@ Stroke.Thickness = 2.5
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, -40, 0, 40)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "🪙 MM2 ULTIMATE LOBBY FIX"
+Title.Text = "🪙 MM2 SPEED & SMOOTH FIX"
 Title.TextColor3 = Color3.fromRGB(130, 0, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 11
@@ -68,21 +68,44 @@ CloseBtn.TextSize = 14
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
 local FarmBtn = Instance.new("TextButton", MainFrame)
-FarmBtn.Size = UDim2.new(1, -20, 0, 40)
+FarmBtn.Size = UDim2.new(1, -20, 0, 35)
 FarmBtn.Position = UDim2.new(0, 10, 0, 45)
 FarmBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-FarmBtn.Text = "التجميع الذكي المضمون : OFF"
+FarmBtn.Text = "التجميع الذكي : OFF"
 FarmBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
 FarmBtn.Font = Enum.Font.GothamBold
-FarmBtn.TextSize = 13
+FarmBtn.TextSize = 12
 Instance.new("UICorner", FarmBtn).CornerRadius = UDim.new(0, 6)
 local BtnStroke = Instance.new("UIStroke", FarmBtn)
 BtnStroke.Color = Color3.fromRGB(35, 35, 40)
 
+-- 🎛️ خانة تحديد السرعة المخصصة
+local SpeedLabel = Instance.new("TextLabel", MainFrame)
+SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
+SpeedLabel.Position = UDim2.new(0, 10, 0, 85)
+SpeedLabel.Text = "⚡ سرعة الانتقال (كلما زاد الرقم زادت السرعة): 35"
+SpeedLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
+SpeedLabel.Font = Enum.Font.GothamBold
+SpeedLabel.TextSize = 10
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.BackgroundTransparency = 1
+
+local SpeedBox = Instance.new("TextBox", MainFrame)
+SpeedBox.Size = UDim2.new(1, -20, 0, 30)
+SpeedBox.Position = UDim2.new(0, 10, 0, 108)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+SpeedBox.Text = "35"
+SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBox.Font = Enum.Font.GothamBold
+SpeedBox.TextSize = 13
+Instance.new("UICorner", SpeedBox).CornerRadius = UDim.new(0, 6)
+local BoxStroke = Instance.new("UIStroke", SpeedBox)
+BoxStroke.Color = Color3.fromRGB(80, 0, 160)
+
 -- 🔔 إطار قائمة الإشعارات والتنبيهات
 local NotifyFrame = Instance.new("Frame", MainFrame)
-NotifyFrame.Size = UDim2.new(1, -20, 0, 105)
-NotifyFrame.Position = UDim2.new(0, 10, 0, 95)
+NotifyFrame.Size = UDim2.new(1, -20, 0, 85)
+NotifyFrame.Position = UDim2.new(0, 10, 0, 145)
 NotifyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 NotifyFrame.BorderSizePixel = 0
 Instance.new("UICorner", NotifyFrame).CornerRadius = UDim.new(0, 8)
@@ -90,20 +113,10 @@ local NotifyStroke = Instance.new("UIStroke", NotifyFrame)
 NotifyStroke.Color = Color3.fromRGB(80, 0, 160)
 NotifyStroke.Thickness = 1.5
 
-local NotifyTitle = Instance.new("TextLabel", NotifyFrame)
-NotifyTitle.Size = UDim2.new(1, -10, 0, 25)
-NotifyTitle.Position = UDim2.new(0, 5, 0, 3)
-NotifyTitle.Text = "📢 سجل التنبيهات والأحداث:"
-NotifyTitle.TextColor3 = Color3.fromRGB(200, 150, 255)
-NotifyTitle.Font = Enum.Font.GothamBold
-NotifyTitle.TextSize = 11
-NotifyTitle.TextXAlignment = Enum.TextXAlignment.Left
-NotifyTitle.BackgroundTransparency = 1
-
 local NotifyLog = Instance.new("TextLabel", NotifyFrame)
 NotifyLog.Size = UDim2.new(1, -10, 0, 70)
-NotifyLog.Position = UDim2.new(0, 5, 0, 28)
-NotifyLog.Text = "• تم ضبط فحص اللوبي بناءً على وجود الكوينز والماب."
+NotifyLog.Position = UDim2.new(0, 5, 0, 8)
+NotifyLog.Text = "• النظام جاهز.. تم منع التعليق وضبط السرعة."
 NotifyLog.TextColor3 = Color3.fromRGB(220, 220, 220)
 NotifyLog.Font = Enum.Font.Gotham
 NotifyLog.TextSize = 10
@@ -112,9 +125,19 @@ NotifyLog.TextYAlignment = Enum.TextYAlignment.Top
 NotifyLog.TextWrapped = true
 NotifyLog.BackgroundTransparency = 1
 
+-- عرض عدد الكوينز المجمعة
+local CoinCounter = Instance.new("TextLabel", MainFrame)
+CoinCounter.Size = UDim2.new(1, -20, 0, 25)
+CoinCounter.Position = UDim2.new(0, 10, 0, 240)
+CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
+CoinCounter.TextColor3 = Color3.fromRGB(255, 255, 100)
+CoinCounter.Font = Enum.Font.GothamBold
+CoinCounter.TextSize = 12
+CoinCounter.BackgroundTransparency = 1
+
 local StatusLabel = Instance.new("TextLabel", MainFrame)
 StatusLabel.Size = UDim2.new(1, -20, 0, 25)
-StatusLabel.Position = UDim2.new(0, 10, 0, 215)
+StatusLabel.Position = UDim2.new(0, 10, 0, 270)
 StatusLabel.Text = "⏳ الحالة: متوقف في اللوبي"
 StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
 StatusLabel.Font = Enum.Font.GothamBold
@@ -122,12 +145,13 @@ StatusLabel.TextSize = 11
 StatusLabel.BackgroundTransparency = 1
 
 -- ==========================================================
--- ⚙️ محرك الحركة وفحص حالة الجيم بدقة فائقة
+-- ⚙️ المحرك الأساسي - تم إصلاح مشكلة اللوبي
 -- ==========================================================
 local AutoCoin = false
 local UnderGroundDepth = 10
 local CollectedCoins = {}
 local CurrentTween = nil
+local CoinCount = 0
 
 local Platform = Instance.new("Part")
 Platform.Name = "UndergroundPlatform"
@@ -138,12 +162,10 @@ Platform.CanCollide = true
 Platform.Parent = Workspace
 
 local function SendNotification(msg, color)
-    local oldText = NotifyLog.Text
     local lines = {}
-    for line in oldText:gmatch("[^\n]+") do
+    for line in NotifyLog.Text:gmatch("[^\n]+") do
         table.insert(lines, line)
     end
-    -- Keep last 4 lines
     while #lines >= 4 do
         table.remove(lines, 1)
     end
@@ -164,38 +186,40 @@ local function IsPlayerAlive()
     return true
 end
 
--- 🧠 الفحص المتطور: يعتمد على 3 طرق للكشف عن بداية الجولة
+-- ==========================================================
+-- ✅ فحص اللوبي المحسّن - الطريقة الصحيحة
+-- ==========================================================
 local function IsInLobby()
     -- الطريقة 1: فحص عدد الكوينز في الماب
     local coinCount = 0
-    local mapParts = 0
-    
     for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") then
-            -- عد الكوينز
-            if v.Name == "Coin_Server" or v.Name == "Coin" then
-                coinCount = coinCount + 1
-            end
-            -- عد أجزاء الماب (أي أجزاء غير لاعبين وإضاءة)
-            if v.Parent and v.Parent ~= LocalPlayer.Character and v.Parent.Name ~= "Lighting" and v.Parent.Name ~= "Camera" then
-                mapParts = mapParts + 1
-            end
+        if v:IsA("BasePart") and (v.Name == "Coin_Server" or v.Name == "Coin") then
+            coinCount = coinCount + 1
         end
     end
     
-    -- الطريقة 2: فحص وجود مجلد الماب في Workspace
+    -- إذا كان عدد الكوينز أقل من 3، يعني في اللوبي
+    if coinCount < 3 then
+        return true
+    end
+    
+    -- الطريقة 2: فحص وجود مجلد الماب
     local hasMap = false
     for _, child in pairs(Workspace:GetChildren()) do
-        if child:IsA("Model") and child.Name ~= "Lobby" and child.Name ~= "Camera" and child.Name ~= "Lighting" then
-            -- تأكد انه مو شخصية اللاعب
-            if child ~= LocalPlayer.Character then
+        if child:IsA("Model") and child.Name ~= "Lobby" and child.Name ~= "Camera" and child ~= LocalPlayer.Character then
+            -- تأكد انه فيه أجزاء كافية
+            if #child:GetChildren() > 3 then
                 hasMap = true
                 break
             end
         end
     end
     
-    -- الطريقة 3: فحص متغير الجولة من ReplicatedStorage (إن وجد)
+    if not hasMap then
+        return true
+    end
+    
+    -- الطريقة 3: فحص متغير الجولة (إن وجد)
     local roundActive = nil
     pcall(function()
         if ReplicatedStorage:FindFirstChild("RoundActive") then
@@ -203,24 +227,12 @@ local function IsInLobby()
         end
     end)
     
-    -- ✅ القرار النهائي: إحنا باللوبي إذا:
-    -- 1- مافي كوينز كافية (اقل من 3)
-    -- 2- مافي ماب محمل
-    -- 3- أو roundActive == false (إذا كان موجود)
-    
-    if coinCount < 3 then
-        return true -- ما فيه كوينز كافية = لوبي
-    end
-    
-    if not hasMap then
-        return true -- ما فيه ماب = لوبي
-    end
-    
     if roundActive == false then
-        return true -- الجولة منتهية رسمياً = لوبي
+        return true
     end
     
-    return false -- كل شيء تمام = في الجولة
+    -- إذا وصلنا هنا، يعني إحنا في الجولة
+    return false
 end
 
 CloseBtn.MouseButton1Click:Connect(function()
@@ -236,14 +248,16 @@ end)
 FarmBtn.MouseButton1Click:Connect(function()
     AutoCoin = not AutoCoin
     if AutoCoin then
-        FarmBtn.Text = "التجميع الذكي المضمون : ON"
+        FarmBtn.Text = "التجميع الذكي : ON ✅"
         FarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         FarmBtn.BackgroundColor3 = Color3.fromRGB(45, 15, 70)
         BtnStroke.Color = Color3.fromRGB(130, 0, 255)
         CollectedCoins = {}
-        SendNotification("✅ تم تفعيل الفارم المضمون!", Color3.fromRGB(0, 255, 150))
+        CoinCount = 0
+        CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
+        SendNotification("✅ تم تفعيل الفارم السلس.", Color3.fromRGB(0, 255, 150))
     else
-        FarmBtn.Text = "التجميع الذكي المضمون : OFF"
+        FarmBtn.Text = "التجميع الذكي : OFF"
         FarmBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
         FarmBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
         BtnStroke.Color = Color3.fromRGB(35, 35, 40)
@@ -268,6 +282,8 @@ LocalPlayer.CharacterAdded:Connect(function()
         CurrentTween:Cancel()
         CurrentTween = nil
     end
+    CoinCount = 0
+    CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
     SendNotification("🔄 تم رصد إعادة الترسبن.", Color3.fromRGB(255, 200, 0))
 end)
 
@@ -299,9 +315,9 @@ task.spawn(function()
                 continue
             end
             
-            -- 🛑 الفحص الحاسم: لو كنا باللوبي، قف مكانك
+            -- ⚠️ فحص اللوبي المحسّن
             if IsInLobby() then
-                StatusLabel.Text = "🏠 الحالة: في اللوبي (متوقف تماماً)"
+                StatusLabel.Text = "🏠 الحالة: في اللوبي (متوقف)"
                 if CurrentTween then
                     CurrentTween:Cancel()
                     CurrentTween = nil
@@ -319,20 +335,25 @@ task.spawn(function()
                 
                 if TargetCoin and TargetCoin.Parent then
                     StatusLabel.Text = "🪙 الحالة: داخل الماب - جاري التجميع"
-                    SendNotification("🎯 جاري التجميع من الماب...", Color3.fromRGB(100, 200, 255))
                     
                     local TargetUnderPos = Vector3.new(TargetCoin.Position.X, TargetCoin.Position.Y - UnderGroundDepth, TargetCoin.Position.Z)
                     Platform.CFrame = CFrame.new(TargetUnderPos.X, TargetUnderPos.Y - 2.5, TargetUnderPos.Z)
                     
                     local Distance = (Root.Position - TargetUnderPos).Magnitude
-                    local TweenTime = math.max(Distance / 25, 0.2) -- سرعة ذكية
+                    
+                    -- قراءة السرعة المحددة من خانة النص
+                    local customSpeed = tonumber(SpeedBox.Text) or 35
+                    if customSpeed < 5 then customSpeed = 5 end
+                    if customSpeed > 100 then customSpeed = 100 end
+                    
+                    local TweenTime = Distance / customSpeed 
                     local TInfo = TweenInfo.new(TweenTime, Enum.EasingStyle.Linear)
                     
                     CurrentTween = TweenService:Create(Root, TInfo, {CFrame = CFrame.new(TargetUnderPos)})
                     CurrentTween:Play()
                     
                     while CurrentTween and CurrentTween.PlaybackState == Enum.PlaybackState.Playing do
-                        task.wait(0.05)
+                        task.wait()
                         if not AutoCoin or not IsPlayerAlive() or IsInLobby() then
                             if CurrentTween then CurrentTween:Cancel() end
                             break
@@ -340,11 +361,11 @@ task.spawn(function()
                     end
                     
                     if AutoCoin and IsPlayerAlive() and not IsInLobby() and TargetCoin and TargetCoin.Parent then
-                        StatusLabel.Text = "⚡ طلوع ونزول آمن"
+                        StatusLabel.Text = "⚡ التقاط الكوين"
                         local undergroundCFrame = Root.CFrame
                         local CoinPos = TargetCoin.CFrame
                         
-                        local UpTweenTime = 0.25
+                        local UpTweenTime = 0.2
                         local UpTInfo = TweenInfo.new(UpTweenTime, Enum.EasingStyle.Linear)
                         local UpTween = TweenService:Create(Root, UpTInfo, {CFrame = CoinPos})
                         UpTween:Play()
@@ -355,9 +376,13 @@ task.spawn(function()
                             firetouchinterest(Root, TargetCoin, 1)
                         end)
                         
+                        -- زيادة عداد الكوينز
+                        CoinCount = CoinCount + 1
+                        CoinCounter.Text = "🪙 الكوينز المجمعة: " .. CoinCount
+                        
                         CollectedCoins[TargetCoin] = true
-                        SendNotification("✅ تم لقط الكوين!", Color3.fromRGB(0, 255, 100))
-                        task.wait(0.05)
+                        SendNotification("✅ تم جمع الكوين! (" .. CoinCount .. ")", Color3.fromRGB(0, 255, 100))
+                        task.wait(0.02)
                         
                         local DownTween = TweenService:Create(Root, UpTInfo, {CFrame = undergroundCFrame})
                         DownTween:Play()
@@ -371,5 +396,4 @@ task.spawn(function()
             end
         end
     end
-end) 
- 
+end)
