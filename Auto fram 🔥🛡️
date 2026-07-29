@@ -157,7 +157,7 @@ Stroke.Thickness = 2.5
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, -40, 0, 40)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "🪙 MM2 SPEED & SMOOTH FIX"
+Title.Text = "AMT fram 🛡️"
 Title.TextColor3 = Color3.fromRGB(130, 0, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 11
@@ -550,7 +550,7 @@ end)
 
 -- 💬 أحداث زر ديسكورد
 DiscordBtn.MouseButton1Click:Connect(function()
-    local discordLink = "https://discord.gg/2Zzu7ZHBb"
+    local discordLink = "https://discord.gg/HWGqaEetd"
     setclipboard(discordLink)
     KeyStatus.Text = "📋 تم نسخ رابط الديسكورد!"
     KeyStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
@@ -595,7 +595,7 @@ FarmBtn.MouseButton1Click:Connect(function()
         BtnStroke.Color = Color3.fromRGB(130, 0, 255)
         CollectedCoins = {}
         CoinCount = 0
-        CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
+        CoinCounter.Text = "💴 الكوينز المجمعة: 0"
         SendNotification("✅ تم تفعيل الفارم السلس.", Color3.fromRGB(0, 255, 150))
     else
         FarmBtn.Text = "التجميع الذكي : OFF"
