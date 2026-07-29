@@ -1,399 +1,532 @@
--- ==========================================================
--- 🪙 MM2 UNDERGROUND COIN FARMER (V18 - FIXED LOBBY DETECTION)
--- ==========================================================
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local CoreGui = game:GetService("CoreGui")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
 
-if CoreGui:FindFirstChild("MM2_CoinFarmerV18") then
-    CoreGui.MM2_CoinFarmerV18:Destroy()
-end
-if Workspace:FindFirstChild("UndergroundPlatform") then
-    Workspace.UndergroundPlatform:Destroy()
-end
+-- ====== اسم الشخص الوحيد اللي تظهر له قائمة النشر ======
+local ALLOWED_USER = "makgxozf19"
 
--- ==========================================================
--- 🎨 الواجهة (نيون بنفسجي - Delta Mobile مع تحكم بالسرعة)
--- ==========================================================
-local ScreenGui = Instance.new("ScreenGui", CoreGui)
-ScreenGui.Name = "MM2_CoinFarmerV18"
-ScreenGui.ResetOnSpawn = false
+-- ====== تحقق إذا كان اللاعب هو المصرح له (لقائمة النشر فقط) ======
+local isPublisher = (player.Name == ALLOWED_USER)
 
-local OpenBtn = Instance.new("TextButton", ScreenGui)
-OpenBtn.Size = UDim2.new(0, 60, 0, 35)
-OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
-OpenBtn.Text = "Coins 🪙"
-OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-OpenBtn.Font = Enum.Font.GothamBold
-OpenBtn.TextSize = 12
-OpenBtn.Visible = false
-Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 6)
+local screenGui = Instance.new("ScreenGui")
+screenGui.ResetOnSpawn = false
+screenGui.Parent = gui
 
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 340, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -160)
-MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+-- ====== قائمة الإعلانات الأساسية (تظهر للكل) ======
+local BaseAds = {
+	{Type="Image", Id="81610241171872"},
+	{Type="Image", Id="80916898364971"},
+	{Type="Video", Id="5608304953"},
+	{Type="Video", Id="5608310319"},
+}
 
-local Stroke = Instance.new("UIStroke", MainFrame)
-Stroke.Color = Color3.fromRGB(130, 0, 255)
-Stroke.Thickness = 2.5
+-- ====== قائمة الإعلانات المنشورة (تختفي بعد ساعة) ======
+local PublishedAds = {}
 
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, -40, 0, 40)
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "🪙 MM2 SPEED & SMOOTH FIX"
-Title.TextColor3 = Color3.fromRGB(130, 0, 255)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 11
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.BackgroundTransparency = 1
+-- ====== قائمة الإعلانات المتاحة للعرض ======
+local AvailableAds = {}
 
-local CloseBtn = Instance.new("TextButton", MainFrame)
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 6)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 20)
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 14
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+-- ====== سجل عدد مرات ظهور كل إعلان ======
+local AdViewCount = {}
 
-local FarmBtn = Instance.new("TextButton", MainFrame)
-FarmBtn.Size = UDim2.new(1, -20, 0, 35)
-FarmBtn.Position = UDim2.new(0, 10, 0, 45)
-FarmBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-FarmBtn.Text = "التجميع الذكي : OFF"
-FarmBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-FarmBtn.Font = Enum.Font.GothamBold
-FarmBtn.TextSize = 12
-Instance.new("UICorner", FarmBtn).CornerRadius = UDim.new(0, 6)
-local BtnStroke = Instance.new("UIStroke", FarmBtn)
-BtnStroke.Color = Color3.fromRGB(35, 35, 40)
+-- ====== الحد الأقصى لظهور كل إعلان ======
+local MAX_VIEWS = 1 -- كل إعلان يطلع مره وحده
 
--- 🎛️ خانة تحديد السرعة المخصصة
-local SpeedLabel = Instance.new("TextLabel", MainFrame)
-SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
-SpeedLabel.Position = UDim2.new(0, 10, 0, 85)
-SpeedLabel.Text = "⚡ سرعة الانتقال (كلما زاد الرقم زادت السرعة): 35"
-SpeedLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
-SpeedLabel.Font = Enum.Font.GothamBold
-SpeedLabel.TextSize = 10
-SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
-SpeedLabel.BackgroundTransparency = 1
+-- ====== مدة بقاء الإعلان المنشور (بالثواني) ======
+local PUBLISHED_DURATION = 3600 -- ساعة
 
-local SpeedBox = Instance.new("TextBox", MainFrame)
-SpeedBox.Size = UDim2.new(1, -20, 0, 30)
-SpeedBox.Position = UDim2.new(0, 10, 0, 108)
-SpeedBox.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-SpeedBox.Text = "35"
-SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedBox.Font = Enum.Font.GothamBold
-SpeedBox.TextSize = 13
-Instance.new("UICorner", SpeedBox).CornerRadius = UDim.new(0, 6)
-local BoxStroke = Instance.new("UIStroke", SpeedBox)
-BoxStroke.Color = Color3.fromRGB(80, 0, 160)
+-- ====== إعدادات ======
+local AD_INTERVAL = 120 -- دقيقتين (120 ثانية)
+local AD_DURATION = 5
 
--- 🔔 إطار قائمة الإشعارات والتنبيهات
-local NotifyFrame = Instance.new("Frame", MainFrame)
-NotifyFrame.Size = UDim2.new(1, -20, 0, 85)
-NotifyFrame.Position = UDim2.new(0, 10, 0, 145)
-NotifyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-NotifyFrame.BorderSizePixel = 0
-Instance.new("UICorner", NotifyFrame).CornerRadius = UDim.new(0, 8)
-local NotifyStroke = Instance.new("UIStroke", NotifyFrame)
-NotifyStroke.Color = Color3.fromRGB(80, 0, 160)
-NotifyStroke.Thickness = 1.5
+-- ====== اسم الناشر ======
+local PUBLISHER_NAME = "makgxozf19"
 
-local NotifyLog = Instance.new("TextLabel", NotifyFrame)
-NotifyLog.Size = UDim2.new(1, -10, 0, 70)
-NotifyLog.Position = UDim2.new(0, 5, 0, 8)
-NotifyLog.Text = "• النظام جاهز.. تم منع التعليق وضبط السرعة."
-NotifyLog.TextColor3 = Color3.fromRGB(220, 220, 220)
-NotifyLog.Font = Enum.Font.Gotham
-NotifyLog.TextSize = 10
-NotifyLog.TextXAlignment = Enum.TextXAlignment.Left
-NotifyLog.TextYAlignment = Enum.TextYAlignment.Top
-NotifyLog.TextWrapped = true
-NotifyLog.BackgroundTransparency = 1
-
--- عرض عدد الكوينز المجمعة
-local CoinCounter = Instance.new("TextLabel", MainFrame)
-CoinCounter.Size = UDim2.new(1, -20, 0, 25)
-CoinCounter.Position = UDim2.new(0, 10, 0, 240)
-CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
-CoinCounter.TextColor3 = Color3.fromRGB(255, 255, 100)
-CoinCounter.Font = Enum.Font.GothamBold
-CoinCounter.TextSize = 12
-CoinCounter.BackgroundTransparency = 1
-
-local StatusLabel = Instance.new("TextLabel", MainFrame)
-StatusLabel.Size = UDim2.new(1, -20, 0, 25)
-StatusLabel.Position = UDim2.new(0, 10, 0, 270)
-StatusLabel.Text = "⏳ الحالة: متوقف في اللوبي"
-StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-StatusLabel.Font = Enum.Font.GothamBold
-StatusLabel.TextSize = 11
-StatusLabel.BackgroundTransparency = 1
-
--- ==========================================================
--- ⚙️ المحرك الأساسي - تم إصلاح مشكلة اللوبي
--- ==========================================================
-local AutoCoin = false
-local UnderGroundDepth = 10
-local CollectedCoins = {}
-local CurrentTween = nil
-local CoinCount = 0
-
-local Platform = Instance.new("Part")
-Platform.Name = "UndergroundPlatform"
-Platform.Size = Vector3.new(12, 1, 12)
-Platform.Anchored = true
-Platform.Transparency = 1
-Platform.CanCollide = true
-Platform.Parent = Workspace
-
-local function SendNotification(msg, color)
-    local lines = {}
-    for line in NotifyLog.Text:gmatch("[^\n]+") do
-        table.insert(lines, line)
-    end
-    while #lines >= 4 do
-        table.remove(lines, 1)
-    end
-    table.insert(lines, "• " .. msg)
-    NotifyLog.Text = table.concat(lines, "\n")
-    if color then
-        NotifyLog.TextColor3 = color
-    end
+-- ====== تهيئة القوائم ======
+local function InitAds()
+	AvailableAds = {}
+	AdViewCount = {}
+	
+	for _, ad in ipairs(BaseAds) do
+		table.insert(AvailableAds, ad)
+		AdViewCount[ad.Id] = 0
+	end
+	
+	for _, ad in ipairs(PublishedAds) do
+		table.insert(AvailableAds, ad)
+		AdViewCount[ad.Id] = 0
+	end
+	
+	print("📢 تم تهيئة " .. #AvailableAds .. " إعلان")
 end
 
-local function IsPlayerAlive()
-    local character = LocalPlayer.Character
-    if not character then return false end
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return false end
-    local root = character:FindFirstChild("HumanoidRootPart")
-    if not root then return false end
-    return true
+-- ====== دالة عرض الإعلان ======
+local function ShowAd(ad)
+	if not ad then
+		if #AvailableAds == 0 then
+			print("🔄 جميع الإعلانات انتهت، إعادة التهيئة...")
+			InitAds()
+			if #AvailableAds == 0 then
+				print("⚠️ لا يوجد إعلانات للعرض!")
+				return
+			end
+		end
+		local randomIndex = math.random(1, #AvailableAds)
+		ad = AvailableAds[randomIndex]
+	end
+	
+	print("📢 Showing: " .. ad.Type .. " - " .. ad.Id)
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0, 420, 0, 250)
+	frame.Position = UDim2.new(0.5, -210, 0.5, -125)
+	frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	frame.BorderSizePixel = 0
+	frame.Parent = screenGui
+	Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(0, 170, 255)
+	stroke.Thickness = 2
+	stroke.Parent = frame
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0, 30)
+	title.BackgroundTransparency = 1
+	title.Text = "📢 Advertisement"
+	title.Font = Enum.Font.GothamBold
+	title.TextScaled = true
+	title.TextColor3 = Color3.new(1, 1, 1)
+	title.Parent = frame
+
+	local viewCounter = Instance.new("TextLabel")
+	viewCounter.Size = UDim2.new(0, 80, 0, 20)
+	viewCounter.Position = UDim2.new(1, -85, 0, 5)
+	viewCounter.BackgroundTransparency = 1
+	viewCounter.Text = "👁 " .. (AdViewCount[ad.Id] or 0) + 1 .. "/" .. MAX_VIEWS
+	viewCounter.Font = Enum.Font.Gotham
+	viewCounter.TextScaled = true
+	viewCounter.TextColor3 = Color3.fromRGB(200, 200, 200)
+	viewCounter.Parent = frame
+
+	if ad.Type == "Image" then
+		local img = Instance.new("ImageLabel")
+		img.Size = UDim2.new(1, -10, 1, -45)
+		img.Position = UDim2.new(0, 5, 0, 35)
+		img.BackgroundTransparency = 1
+		img.ScaleType = Enum.ScaleType.Fit
+		img.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. ad.Id .. "&width=420&height=420"
+		img.Parent = frame
+		task.wait(0.5)
+	else
+		local video = Instance.new("VideoFrame")
+		video.Size = UDim2.new(1, -10, 1, -45)
+		video.Position = UDim2.new(0, 5, 0, 35)
+		video.BackgroundTransparency = 1
+		video.Video = "rbxassetid://" .. ad.Id
+		video.Volume = 0
+		video.Looped = true
+		video.Parent = frame
+		repeat task.wait(0.5) until video.IsLoaded == true
+		video:Play()
+	end
+
+	AdViewCount[ad.Id] = (AdViewCount[ad.Id] or 0) + 1
+
+	if AdViewCount[ad.Id] >= MAX_VIEWS then
+		for i = #AvailableAds, 1, -1 do
+			if AvailableAds[i].Id == ad.Id then
+				table.remove(AvailableAds, i)
+				print("🗑️ تم حذف الإعلان " .. ad.Id .. " بعد " .. MAX_VIEWS .. " مشاهدة")
+				break
+			end
+		end
+	end
+
+	task.wait(AD_DURATION)
+	frame:Destroy()
 end
 
--- ==========================================================
--- ✅ فحص اللوبي المحسّن - الطريقة الصحيحة
--- ==========================================================
-local function IsInLobby()
-    -- الطريقة 1: فحص عدد الكوينز في الماب
-    local coinCount = 0
-    for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") and (v.Name == "Coin_Server" or v.Name == "Coin") then
-            coinCount = coinCount + 1
-        end
-    end
-    
-    -- إذا كان عدد الكوينز أقل من 3، يعني في اللوبي
-    if coinCount < 3 then
-        return true
-    end
-    
-    -- الطريقة 2: فحص وجود مجلد الماب
-    local hasMap = false
-    for _, child in pairs(Workspace:GetChildren()) do
-        if child:IsA("Model") and child.Name ~= "Lobby" and child.Name ~= "Camera" and child ~= LocalPlayer.Character then
-            -- تأكد انه فيه أجزاء كافية
-            if #child:GetChildren() > 3 then
-                hasMap = true
-                break
-            end
-        end
-    end
-    
-    if not hasMap then
-        return true
-    end
-    
-    -- الطريقة 3: فحص متغير الجولة (إن وجد)
-    local roundActive = nil
-    pcall(function()
-        if ReplicatedStorage:FindFirstChild("RoundActive") then
-            roundActive = ReplicatedStorage.RoundActive.Value
-        end
-    end)
-    
-    if roundActive == false then
-        return true
-    end
-    
-    -- إذا وصلنا هنا، يعني إحنا في الجولة
-    return false
+-- ====== دالة نشر إعلان جديد (للمصرح له فقط) ======
+local function PublishAd(assetId, adType)
+	if not isPublisher then
+		print("🚫 غير مصرح لك بالنشر!")
+		return
+	end
+	
+	if assetId == "" then
+		statusLabel.Text = "⚠️ أدخل Asset ID!"
+		return
+	end
+	
+	if not tonumber(assetId) then
+		statusLabel.Text = "⚠️ أدخل أرقام فقط!"
+		return
+	end
+	
+	for _, ad in ipairs(PublishedAds) do
+		if ad.Id == assetId then
+			statusLabel.Text = "⚠️ هذا الإعلان موجود مسبقاً!"
+			return
+		end
+	end
+	
+	local newAd = {Type=adType or "Image", Id=assetId}
+	table.insert(PublishedAds, newAd)
+	table.insert(AvailableAds, newAd)
+	AdViewCount[assetId] = 0
+	
+	statusLabel.Text = "✅ نشر: " .. assetId
+	print("📢 تم نشر الإعلان: " .. assetId .. " بواسطة " .. PUBLISHER_NAME)
+	
+	task.spawn(function()
+		task.wait(PUBLISHED_DURATION)
+		for i = #PublishedAds, 1, -1 do
+			if PublishedAds[i].Id == assetId then
+				table.remove(PublishedAds, i)
+			end
+		end
+		for i = #AvailableAds, 1, -1 do
+			if AvailableAds[i].Id == assetId then
+				table.remove(AvailableAds, i)
+			end
+		end
+		print("⏰ انتهت صلاحية الإعلان المنشور: " .. assetId)
+		UpdateCounter()
+	end)
+	
+	ShowAd(newAd)
+	UpdatePublishedList()
+	UpdateCounter()
 end
 
-CloseBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    OpenBtn.Visible = true
-end)
-
-OpenBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    OpenBtn.Visible = false
-end)
-
-FarmBtn.MouseButton1Click:Connect(function()
-    AutoCoin = not AutoCoin
-    if AutoCoin then
-        FarmBtn.Text = "التجميع الذكي : ON ✅"
-        FarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        FarmBtn.BackgroundColor3 = Color3.fromRGB(45, 15, 70)
-        BtnStroke.Color = Color3.fromRGB(130, 0, 255)
-        CollectedCoins = {}
-        CoinCount = 0
-        CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
-        SendNotification("✅ تم تفعيل الفارم السلس.", Color3.fromRGB(0, 255, 150))
-    else
-        FarmBtn.Text = "التجميع الذكي : OFF"
-        FarmBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-        FarmBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-        BtnStroke.Color = Color3.fromRGB(35, 35, 40)
-        if CurrentTween then CurrentTween:Cancel() end
-        Platform.CFrame = CFrame.new(0, 99999, 0)
-        SendNotification("⏹ تم إيقاف الفارم يدوياً.", Color3.fromRGB(255, 100, 100))
-    end
-end)
-
-RunService.Stepped:Connect(function()
-    if AutoCoin and LocalPlayer.Character then
-        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-    end
-end)
-
-LocalPlayer.CharacterAdded:Connect(function()
-    if CurrentTween then
-        CurrentTween:Cancel()
-        CurrentTween = nil
-    end
-    CoinCount = 0
-    CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
-    SendNotification("🔄 تم رصد إعادة الترسبن.", Color3.fromRGB(255, 200, 0))
-end)
-
-local function GetNearestValidCoin(rootPos)
-    local nearest = nil
-    local shortestDist = math.huge
-    for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") and (v.Name == "Coin_Server" or v.Name == "Coin") and not CollectedCoins[v] then
-            local dist = (v.Position - rootPos).Magnitude
-            if dist < shortestDist then
-                shortestDist = dist
-                nearest = v
-            end
-        end
-    end
-    return nearest
+-- ====== دالة حذف إعلان منشور (للمصرح له فقط) ======
+local function DeletePublishedAd(assetId)
+	if not isPublisher then
+		print("🚫 غير مصرح لك بالحذف!")
+		return
+	end
+	
+	for i = #PublishedAds, 1, -1 do
+		if PublishedAds[i].Id == assetId then
+			table.remove(PublishedAds, i)
+			print("🗑️ تم حذف الإعلان المنشور: " .. assetId)
+		end
+	end
+	for i = #AvailableAds, 1, -1 do
+		if AvailableAds[i].Id == assetId then
+			table.remove(AvailableAds, i)
+		end
+	end
+	UpdatePublishedList()
+	UpdateCounter()
 end
 
-task.spawn(function()
-    while true do
-        task.wait(0.2)
-        
-        if AutoCoin then
-            if not IsPlayerAlive() then
-                StatusLabel.Text = "💀 الحالة: ميت / بانتظار الترسبن"
-                if CurrentTween then CurrentTween:Cancel() end
-                Platform.CFrame = CFrame.new(0, 99999, 0)
-                task.wait(1)
-                continue
-            end
-            
-            -- ⚠️ فحص اللوبي المحسّن
-            if IsInLobby() then
-                StatusLabel.Text = "🏠 الحالة: في اللوبي (متوقف)"
-                if CurrentTween then
-                    CurrentTween:Cancel()
-                    CurrentTween = nil
-                end
-                Platform.CFrame = CFrame.new(0, 99999, 0)
-                task.wait(1)
-                continue
-            end
-            
-            local Character = LocalPlayer.Character
-            local Root = Character and Character:FindFirstChild("HumanoidRootPart")
-            
-            if Character and Root then
-                local TargetCoin = GetNearestValidCoin(Root.Position)
-                
-                if TargetCoin and TargetCoin.Parent then
-                    StatusLabel.Text = "🪙 الحالة: داخل الماب - جاري التجميع"
-                    
-                    local TargetUnderPos = Vector3.new(TargetCoin.Position.X, TargetCoin.Position.Y - UnderGroundDepth, TargetCoin.Position.Z)
-                    Platform.CFrame = CFrame.new(TargetUnderPos.X, TargetUnderPos.Y - 2.5, TargetUnderPos.Z)
-                    
-                    local Distance = (Root.Position - TargetUnderPos).Magnitude
-                    
-                    -- قراءة السرعة المحددة من خانة النص
-                    local customSpeed = tonumber(SpeedBox.Text) or 35
-                    if customSpeed < 5 then customSpeed = 5 end
-                    if customSpeed > 100 then customSpeed = 100 end
-                    
-                    local TweenTime = Distance / customSpeed 
-                    local TInfo = TweenInfo.new(TweenTime, Enum.EasingStyle.Linear)
-                    
-                    CurrentTween = TweenService:Create(Root, TInfo, {CFrame = CFrame.new(TargetUnderPos)})
-                    CurrentTween:Play()
-                    
-                    while CurrentTween and CurrentTween.PlaybackState == Enum.PlaybackState.Playing do
-                        task.wait()
-                        if not AutoCoin or not IsPlayerAlive() or IsInLobby() then
-                            if CurrentTween then CurrentTween:Cancel() end
-                            break
-                        end
-                    end
-                    
-                    if AutoCoin and IsPlayerAlive() and not IsInLobby() and TargetCoin and TargetCoin.Parent then
-                        StatusLabel.Text = "⚡ التقاط الكوين"
-                        local undergroundCFrame = Root.CFrame
-                        local CoinPos = TargetCoin.CFrame
-                        
-                        local UpTweenTime = 0.2
-                        local UpTInfo = TweenInfo.new(UpTweenTime, Enum.EasingStyle.Linear)
-                        local UpTween = TweenService:Create(Root, UpTInfo, {CFrame = CoinPos})
-                        UpTween:Play()
-                        task.wait(UpTweenTime)
-                        
-                        pcall(function()
-                            firetouchinterest(Root, TargetCoin, 0)
-                            firetouchinterest(Root, TargetCoin, 1)
-                        end)
-                        
-                        -- زيادة عداد الكوينز
-                        CoinCount = CoinCount + 1
-                        CoinCounter.Text = "🪙 الكوينز المجمعة: " .. CoinCount
-                        
-                        CollectedCoins[TargetCoin] = true
-                        SendNotification("✅ تم جمع الكوين! (" .. CoinCount .. ")", Color3.fromRGB(0, 255, 100))
-                        task.wait(0.02)
-                        
-                        local DownTween = TweenService:Create(Root, UpTInfo, {CFrame = undergroundCFrame})
-                        DownTween:Play()
-                        task.wait(UpTweenTime)
-                    end
-                else
-                    StatusLabel.Text = "🔍 بانتظار كوينز جديدة..."
-                    CollectedCoins = {}
-                    task.wait(0.5)
-                end
-            end
-        end
-    end
-end) 
+-- ====== نافذة الإعلانات المنشورة (للمصرح له فقط) ======
+local publishedFrame = nil
+
+local function UpdatePublishedList()
+	if not isPublisher then return end
+	
+	if publishedFrame then
+		publishedFrame:Destroy()
+		publishedFrame = nil
+	end
+	
+	if #PublishedAds == 0 then
+		statusLabel.Text = "📭 لا يوجد إعلانات منشورة!"
+		return
+	end
+	
+	publishedFrame = Instance.new("Frame")
+	publishedFrame.Size = UDim2.new(0, 350, 0, 300)
+	publishedFrame.Position = UDim2.new(0.5, -175, 0.5, -150)
+	publishedFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+	publishedFrame.BorderSizePixel = 0
+	publishedFrame.Parent = screenGui
+	Instance.new("UICorner", publishedFrame).CornerRadius = UDim.new(0, 12)
+	
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(255, 100, 100)
+	stroke.Thickness = 2
+	stroke.Parent = publishedFrame
+	
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0, 30)
+	title.Position = UDim2.new(0, 0, 0, 5)
+	title.BackgroundTransparency = 1
+	title.Text = "📋 " .. PUBLISHER_NAME .. " (" .. #PublishedAds .. ")"
+	title.Font = Enum.Font.GothamBold
+	title.TextScaled = true
+	title.TextColor3 = Color3.new(1, 1, 1)
+	title.Parent = publishedFrame
+	
+	local closeListBtn = Instance.new("TextButton")
+	closeListBtn.Size = UDim2.new(0, 30, 0, 30)
+	closeListBtn.Position = UDim2.new(1, -35, 0, 5)
+	closeListBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	closeListBtn.TextColor3 = Color3.new(1, 1, 1)
+	closeListBtn.Font = Enum.Font.GothamBold
+	closeListBtn.TextScaled = true
+	closeListBtn.Text = "✕"
+	closeListBtn.Parent = publishedFrame
+	Instance.new("UICorner", closeListBtn).CornerRadius = UDim.new(1, 0)
+	
+	closeListBtn.MouseButton1Click:Connect(function()
+		publishedFrame:Destroy()
+		publishedFrame = nil
+	end)
+	
+	local listContainer = Instance.new("ScrollingFrame")
+	listContainer.Size = UDim2.new(1, -10, 1, -45)
+	listContainer.Position = UDim2.new(0, 5, 0, 40)
+	listContainer.BackgroundTransparency = 1
+	listContainer.CanvasSize = UDim2.new(0, 0, #PublishedAds * 45, 0)
+	listContainer.ScrollBarThickness = 8
+	listContainer.Parent = publishedFrame
+	
+	local yPos = 5
+	for _, ad in ipairs(PublishedAds) do
+		local itemFrame = Instance.new("Frame")
+		itemFrame.Size = UDim2.new(1, -10, 0, 35)
+		itemFrame.Position = UDim2.new(0, 5, 0, yPos)
+		itemFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+		itemFrame.BorderSizePixel = 0
+		itemFrame.Parent = listContainer
+		Instance.new("UICorner", itemFrame).CornerRadius = UDim.new(0, 6)
+		
+		local idLabel = Instance.new("TextLabel")
+		idLabel.Size = UDim2.new(0.65, 0, 1, 0)
+		idLabel.Position = UDim2.new(0.05, 0, 0, 0)
+		idLabel.BackgroundTransparency = 1
+		idLabel.Text = ad.Type .. ": " .. ad.Id
+		idLabel.Font = Enum.Font.Gotham
+		idLabel.TextScaled = true
+		idLabel.TextColor3 = Color3.new(1, 1, 1)
+		idLabel.Parent = itemFrame
+		
+		local deleteBtn = Instance.new("TextButton")
+		deleteBtn.Size = UDim2.new(0, 25, 1, -6)
+		deleteBtn.Position = UDim2.new(0.82, 0, 0, 3)
+		deleteBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+		deleteBtn.TextColor3 = Color3.new(1, 1, 1)
+		deleteBtn.Font = Enum.Font.GothamBold
+		deleteBtn.TextScaled = true
+		deleteBtn.Text = "✕"
+		deleteBtn.Parent = itemFrame
+		Instance.new("UICorner", deleteBtn).CornerRadius = UDim.new(1, 0)
+		
+		deleteBtn.MouseButton1Click:Connect(function()
+			DeletePublishedAd(ad.Id)
+		end)
+		
+		yPos = yPos + 40
+	end
+end
+
+-- ====== قائمة النشر (تظهر فقط للمصرح له) ======
+if isPublisher then
+	local panel = Instance.new("Frame")
+	panel.Size = UDim2.new(0, 250, 0, 230)
+	panel.Position = UDim2.new(0.02, 0, 0.5, -115)
+	panel.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+	panel.BorderSizePixel = 0
+	panel.Parent = screenGui
+	Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(0, 170, 255)
+	stroke.Thickness = 2
+	stroke.Parent = panel
+
+	local panelTitle = Instance.new("TextLabel")
+	panelTitle.Size = UDim2.new(1, 0, 0, 30)
+	panelTitle.Position = UDim2.new(0, 0, 0, 5)
+	panelTitle.BackgroundTransparency = 1
+	panelTitle.Text = "📢 " .. PUBLISHER_NAME
+	panelTitle.Font = Enum.Font.GothamBold
+	panelTitle.TextScaled = true
+	panelTitle.TextColor3 = Color3.new(1, 1, 1)
+	panelTitle.Parent = panel
+
+	local assetBox = Instance.new("TextBox")
+	assetBox.Size = UDim2.new(0.9, 0, 0, 30)
+	assetBox.Position = UDim2.new(0.05, 0, 0, 40)
+	assetBox.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+	assetBox.TextColor3 = Color3.new(1, 1, 1)
+	assetBox.Font = Enum.Font.Gotham
+	assetBox.TextScaled = true
+	assetBox.PlaceholderText = "Enter Asset ID..."
+	assetBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+	assetBox.Text = ""
+	assetBox.Parent = panel
+	Instance.new("UICorner", assetBox).CornerRadius = UDim.new(0, 6)
+
+	local publishBtn = Instance.new("TextButton")
+	publishBtn.Size = UDim2.new(0.4, 0, 0, 30)
+	publishBtn.Position = UDim2.new(0.05, 0, 0, 75)
+	publishBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
+	publishBtn.TextColor3 = Color3.new(1, 1, 1)
+	publishBtn.Font = Enum.Font.GothamBold
+	publishBtn.TextScaled = true
+	publishBtn.Text = "📤 Publish"
+	publishBtn.Parent = panel
+	Instance.new("UICorner", publishBtn).CornerRadius = UDim.new(0, 6)
+
+	local randomBtn = Instance.new("TextButton")
+	randomBtn.Size = UDim2.new(0.4, 0, 0, 30)
+	randomBtn.Position = UDim2.new(0.55, 0, 0, 75)
+	randomBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
+	randomBtn.TextColor3 = Color3.new(1, 1, 1)
+	randomBtn.Font = Enum.Font.GothamBold
+	randomBtn.TextScaled = true
+	randomBtn.Text = "🎲 Random"
+	randomBtn.Parent = panel
+	Instance.new("UICorner", randomBtn).CornerRadius = UDim.new(0, 6)
+
+	local previewBtn = Instance.new("TextButton")
+	previewBtn.Size = UDim2.new(0.4, 0, 0, 30)
+	previewBtn.Position = UDim2.new(0.05, 0, 0, 110)
+	previewBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+	previewBtn.TextColor3 = Color3.new(1, 1, 1)
+	previewBtn.Font = Enum.Font.GothamBold
+	previewBtn.TextScaled = true
+	previewBtn.Text = "👁 Preview"
+	previewBtn.Parent = panel
+	Instance.new("UICorner", previewBtn).CornerRadius = UDim.new(0, 6)
+
+	local listBtn = Instance.new("TextButton")
+	listBtn.Size = UDim2.new(0.4, 0, 0, 30)
+	listBtn.Position = UDim2.new(0.55, 0, 0, 110)
+	listBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
+	listBtn.TextColor3 = Color3.new(1, 1, 1)
+	listBtn.Font = Enum.Font.GothamBold
+	listBtn.TextScaled = true
+	listBtn.Text = "📋 List"
+	listBtn.Parent = panel
+	Instance.new("UICorner", listBtn).CornerRadius = UDim.new(0, 6)
+
+	local cancelBtn = Instance.new("TextButton")
+	cancelBtn.Size = UDim2.new(0.9, 0, 0, 30)
+	cancelBtn.Position = UDim2.new(0.05, 0, 0, 145)
+	cancelBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	cancelBtn.TextColor3 = Color3.new(1, 1, 1)
+	cancelBtn.Font = Enum.Font.GothamBold
+	cancelBtn.TextScaled = true
+	cancelBtn.Text = "✕ Cancel"
+	cancelBtn.Parent = panel
+	Instance.new("UICorner", cancelBtn).CornerRadius = UDim.new(0, 6)
+
+	statusLabel = Instance.new("TextLabel")
+	statusLabel.Size = UDim2.new(0.9, 0, 0, 20)
+	statusLabel.Position = UDim2.new(0.05, 0, 0, 180)
+	statusLabel.BackgroundTransparency = 1
+	statusLabel.Text = "✅ Ready..."
+	statusLabel.Font = Enum.Font.Gotham
+	statusLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
+	statusLabel.TextScaled = true
+	statusLabel.Parent = panel
+
+	-- ====== أحداث الأزرار (للمصرح له فقط) ======
+	publishBtn.MouseButton1Click:Connect(function()
+		local id = assetBox.Text
+		PublishAd(id, "Image")
+		assetBox.Text = ""
+	end)
+
+	randomBtn.MouseButton1Click:Connect(function()
+		if #AvailableAds == 0 then
+			InitAds()
+		end
+		if #AvailableAds > 0 then
+			local randomAd = AvailableAds[math.random(1, #AvailableAds)]
+			ShowAd(randomAd)
+			statusLabel.Text = "🎲 Random: " .. randomAd.Id
+		else
+			statusLabel.Text = "⚠️ No ads available!"
+		end
+	end)
+
+	previewBtn.MouseButton1Click:Connect(function()
+		local id = assetBox.Text
+		if id == "" then
+			statusLabel.Text = "⚠️ Enter Asset ID!"
+			return
+		end
+		statusLabel.Text = "👁 Previewing: " .. id
+		local previewAd = {Type="Image", Id=id}
+		ShowAd(previewAd)
+	end)
+
+	listBtn.MouseButton1Click:Connect(function()
+		if #PublishedAds == 0 then
+			statusLabel.Text = "📭 لا يوجد إعلانات منشورة!"
+			return
+		end
+		UpdatePublishedList()
+		statusLabel.Text = "📋 عرض الإعلانات المنشورة"
+	end)
+
+	cancelBtn.MouseButton1Click:Connect(function()
+		assetBox.Text = ""
+		statusLabel.Text = "✅ Ready..."
+	end)
+end
+
+-- ====== مؤقت (يظهر للكل) ======
+local timer = Instance.new("TextLabel")
+timer.Size = UDim2.new(0, 120, 0, 30)
+timer.Position = UDim2.new(1, -130, 1, -40)
+timer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+timer.BackgroundTransparency = 0.2
+timer.TextColor3 = Color3.new(1, 1, 1)
+timer.Font = Enum.Font.GothamBold
+timer.TextScaled = true
+timer.Parent = screenGui
+Instance.new("UICorner", timer).CornerRadius = UDim.new(0, 8)
+
+-- ====== عدد الإعلانات المنشورة (يظهر للكل) ======
+local publishedCount = Instance.new("TextLabel")
+publishedCount.Size = UDim2.new(0, 80, 0, 20)
+publishedCount.Position = UDim2.new(0.02, 0, 0.98, 0)
+publishedCount.BackgroundTransparency = 1
+publishedCount.Text = "📋 0"
+publishedCount.Font = Enum.Font.Gotham
+publishedCount.TextScaled = true
+publishedCount.TextColor3 = Color3.fromRGB(150, 200, 255)
+publishedCount.Parent = screenGui
+
+-- ====== تحديث عداد المنشورات ======
+local function UpdateCounter()
+	publishedCount.Text = "📋 " .. #PublishedAds
+end
+
+-- ====== تهيئة النظام ======
+InitAds()
+UpdateCounter()
+print("📢 نظام الإعلانات جاهز!")
+print("👤 الناشر: " .. PUBLISHER_NAME)
+print("⏱️ الإعلانات كل دقيقتين")
+print("👁️ كل إعلان يطلع مره وحده")
+
+-- ====== الحلقة الرئيسية (تظهر للكل) ======
+while true do
+	for i = AD_INTERVAL, 1, -1 do
+		timer.Text = "📢 " .. i .. "s"
+		task.wait(1)
+	end
+	
+	timer.Text = "📢 AD!"
+	
+	if #AvailableAds == 0 then
+		print("🔄 جميع الإعلانات انتهت، إعادة التهيئة...")
+		InitAds()
+	end
+	
+	if #AvailableAds > 0 then
+		local randomAd = AvailableAds[math.random(1, #AvailableAds)]
+		ShowAd(randomAd)
+	else
+		print("⚠️ لا يوجد إعلانات للعرض!")
+	end
+end
