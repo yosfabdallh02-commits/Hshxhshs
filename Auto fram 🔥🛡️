@@ -1,5 +1,5 @@
 -- ==========================================================
--- 🪙 MM2 UNDERGROUND COIN FARMER (V18 - FIXED LOBBY DETECTION)
+-- 🪙 MM2 UNDERGROUND COIN FARMER (V19 - KEY SYSTEM + ROLE ESP)
 -- ==========================================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -17,12 +17,118 @@ if Workspace:FindFirstChild("UndergroundPlatform") then
 end
 
 -- ==========================================================
--- 🎨 الواجهة (نيون بنفسجي - Delta Mobile مع تحكم بالسرعة)
+-- 🔑 نظام المفتاح (KEY SYSTEM)
+-- ==========================================================
+local KEY = "AYF:#1AMT_yzt" -- المفتاح المطلوب
+local KeyVerified = false
+
+local function CheckKey(inputKey)
+    return inputKey == KEY
+end
+
+-- ==========================================================
+-- 🎨 الواجهة الرئيسية
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = "MM2_CoinFarmerV18"
 ScreenGui.ResetOnSpawn = false
 
+-- ==========================================================
+-- 🔐 نافذة إدخال المفتاح
+-- ==========================================================
+local KeyFrame = Instance.new("Frame", ScreenGui)
+KeyFrame.Size = UDim2.new(0, 340, 0, 230)
+KeyFrame.Position = UDim2.new(0.5, -170, 0.5, -115)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+KeyFrame.BorderSizePixel = 0
+KeyFrame.Active = true
+KeyFrame.Draggable = true
+Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 10)
+local KeyStroke = Instance.new("UIStroke", KeyFrame)
+KeyStroke.Color = Color3.fromRGB(130, 0, 255)
+KeyStroke.Thickness = 2.5
+
+local KeyTitle = Instance.new("TextLabel", KeyFrame)
+KeyTitle.Size = UDim2.new(1, -20, 0, 35)
+KeyTitle.Position = UDim2.new(0, 10, 0, 5)
+KeyTitle.Text = "🔑 أدخل المفتاح"
+KeyTitle.TextColor3 = Color3.fromRGB(130, 0, 255)
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.TextSize = 16
+KeyTitle.BackgroundTransparency = 1
+
+local KeySubTitle = Instance.new("TextLabel", KeyFrame)
+KeySubTitle.Size = UDim2.new(1, -20, 0, 20)
+KeySubTitle.Position = UDim2.new(0, 10, 0, 38)
+KeySubTitle.Text = "لتشغيل سكربت جمع الكوينز"
+KeySubTitle.TextColor3 = Color3.fromRGB(150, 150, 180)
+KeySubTitle.Font = Enum.Font.Gotham
+KeySubTitle.TextSize = 11
+KeySubTitle.BackgroundTransparency = 1
+
+local KeyBox = Instance.new("TextBox", KeyFrame)
+KeyBox.Size = UDim2.new(1, -40, 0, 42)
+KeyBox.Position = UDim2.new(0, 20, 0, 62)
+KeyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+KeyBox.Text = ""
+KeyBox.PlaceholderText = "أدخل المفتاح هنا..."
+KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
+KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyBox.Font = Enum.Font.GothamBold
+KeyBox.TextSize = 14
+Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0, 8)
+local KeyBoxStroke = Instance.new("UIStroke", KeyBox)
+KeyBoxStroke.Color = Color3.fromRGB(80, 0, 160)
+
+local KeyBtn = Instance.new("TextButton", KeyFrame)
+KeyBtn.Size = UDim2.new(0, 120, 0, 38)
+KeyBtn.Position = UDim2.new(0.5, -60, 0, 115)
+KeyBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
+KeyBtn.Text = "✅ تحقق"
+KeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyBtn.Font = Enum.Font.GothamBold
+KeyBtn.TextSize = 14
+Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 8)
+
+-- 🎮 زر ديسكورد (أزرق صغير)
+local DiscordBtn = Instance.new("TextButton", KeyFrame)
+DiscordBtn.Size = UDim2.new(0, 100, 0, 25)
+DiscordBtn.Position = UDim2.new(0.5, -50, 0, 162)
+DiscordBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+DiscordBtn.Text = "💬 Discord"
+DiscordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+DiscordBtn.Font = Enum.Font.GothamBold
+DiscordBtn.TextSize = 11
+Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0, 6)
+local DiscordStroke = Instance.new("UIStroke", DiscordBtn)
+DiscordStroke.Color = Color3.fromRGB(70, 80, 200)
+DiscordStroke.Thickness = 1
+
+local CopyBtn = Instance.new("TextButton", KeyFrame)
+CopyBtn.Size = UDim2.new(0, 28, 0, 25)
+CopyBtn.Position = UDim2.new(0.5, 55, 0, 162)
+CopyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+CopyBtn.Text = "📋"
+CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyBtn.Font = Enum.Font.GothamBold
+CopyBtn.TextSize = 14
+Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 6)
+local CopyStroke = Instance.new("UIStroke", CopyBtn)
+CopyStroke.Color = Color3.fromRGB(60, 60, 70)
+CopyStroke.Thickness = 1
+
+local KeyStatus = Instance.new("TextLabel", KeyFrame)
+KeyStatus.Size = UDim2.new(1, -20, 0, 25)
+KeyStatus.Position = UDim2.new(0, 10, 0, 195)
+KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
+KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
+KeyStatus.Font = Enum.Font.Gotham
+KeyStatus.TextSize = 11
+KeyStatus.BackgroundTransparency = 1
+
+-- ==========================================================
+-- 🎨 الواجهة الرئيسية (تظهر بعد التحقق)
+-- ==========================================================
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 OpenBtn.Size = UDim2.new(0, 60, 0, 35)
 OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
@@ -41,6 +147,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Visible = false
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -145,7 +252,195 @@ StatusLabel.TextSize = 11
 StatusLabel.BackgroundTransparency = 1
 
 -- ==========================================================
--- ⚙️ المحرك الأساسي - تم إصلاح مشكلة اللوبي
+-- 👥 ROLE ESP (نافذة الأدوار المخصصة)
+-- ==========================================================
+local RoleESP_Frame = Instance.new("Frame", ScreenGui)
+RoleESP_Frame.Size = UDim2.new(0, 220, 0, 30)
+RoleESP_Frame.Position = UDim2.new(1, -230, 0, 60)
+RoleESP_Frame.BackgroundColor3 = Color3.fromRGB(8, 8, 16)
+RoleESP_Frame.BorderSizePixel = 0
+RoleESP_Frame.AutomaticSize = Enum.AutomaticSize.Y
+RoleESP_Frame.Visible = false
+RoleESP_Frame.Active = true
+RoleESP_Frame.Draggable = true
+Instance.new("UICorner", RoleESP_Frame).CornerRadius = UDim.new(0, 10)
+local RoleStroke = Instance.new("UIStroke", RoleESP_Frame)
+RoleStroke.Color = Color3.fromRGB(60, 100, 255)
+RoleStroke.Thickness = 1.5
+
+-- Header
+local RoleHdr = Instance.new("Frame", RoleESP_Frame)
+RoleHdr.Size = UDim2.new(1, 0, 0, 30)
+RoleHdr.BackgroundColor3 = Color3.fromRGB(60, 100, 255)
+RoleHdr.BorderSizePixel = 0
+Instance.new("UICorner", RoleHdr).CornerRadius = UDim.new(0, 10)
+
+local RoleHdrL = Instance.new("TextLabel", RoleHdr)
+RoleHdrL.Size = UDim2.new(1, -10, 1, 0)
+RoleHdrL.Position = UDim2.new(0, 10, 0, 0)
+RoleHdrL.BackgroundTransparency = 1
+RoleHdrL.Text = "🎯 القاتل و الشريف"
+RoleHdrL.TextColor3 = Color3.fromRGB(255, 255, 255)
+RoleHdrL.TextSize = 12
+RoleHdrL.Font = Enum.Font.GothamBold
+RoleHdrL.TextXAlignment = Enum.TextXAlignment.Left
+
+-- قائمة اللاعبين
+local RoleList = Instance.new("Frame", RoleESP_Frame)
+RoleList.Size = UDim2.new(1, 0, 0, 0)
+RoleList.Position = UDim2.new(0, 0, 0, 30)
+RoleList.BackgroundTransparency = 1
+RoleList.AutomaticSize = Enum.AutomaticSize.Y
+local RoleLayout = Instance.new("UIListLayout", RoleList)
+RoleLayout.Padding = UDim.new(0, 2)
+Instance.new("UIPadding", RoleList).PaddingLeft = UDim.new(0, 6)
+
+local function ClearRoleList()
+    for _, c in ipairs(RoleList:GetChildren()) do
+        if c.ClassName ~= "UIListLayout" and c.ClassName ~= "UIPadding" then
+            c:Destroy()
+        end
+    end
+end
+
+-- متغيرات لتخزين دور القاتل ومعلومات إضافية
+local MurdererData = nil
+local SheriffData = nil
+
+local function BuildRoleList(data)
+    ClearRoleList()
+    MurdererData = nil
+    SheriffData = nil
+    
+    -- البحث عن القاتل والشريف فقط
+    for name, info in pairs(data) do
+        if info.Role == "Murderer" then
+            MurdererData = {name = name, info = info}
+        elseif info.Role == "Sheriff" then
+            SheriffData = {name = name, info = info}
+        end
+    end
+    
+    local rows = {}
+    if MurdererData then table.insert(rows, MurdererData) end
+    if SheriffData then table.insert(rows, SheriffData) end
+    
+    if #rows == 0 then
+        RoleESP_Frame.Visible = false
+        return
+    end
+    
+    RoleESP_Frame.Visible = true
+    
+    for _, entry in ipairs(rows) do
+        local name = entry.name
+        local info = entry.info
+        local col = entry == MurdererData and Color3.fromRGB(220, 45, 45) or Color3.fromRGB(60, 100, 255)
+        local ico = entry == MurdererData and "🔪" or "🔫"
+        local isMe = name == LocalPlayer.Name
+        local isMurderer = entry == MurdererData
+        
+        local row = Instance.new("Frame", RoleList)
+        row.Size = UDim2.new(1, -6, 0, 32)
+        row.BackgroundColor3 = isMe and Color3.fromRGB(20,20,50) or Color3.fromRGB(14,14,28)
+        row.BorderSizePixel = 0
+        Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+        if isMe then
+            local rs = Instance.new("UIStroke", row)
+            rs.Color = col
+            rs.Thickness = 1
+        end
+        
+        -- شريط جانبي
+        local bar = Instance.new("Frame", row)
+        bar.Size = UDim2.new(0, 3, 0.7, 0)
+        bar.Position = UDim2.new(0, 0, 0.15, 0)
+        bar.BackgroundColor3 = col
+        bar.BorderSizePixel = 0
+        Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
+        
+        -- أيقونة الدور
+        local icoL = Instance.new("TextLabel", row)
+        icoL.Size = UDim2.new(0, 24, 1, 0)
+        icoL.Position = UDim2.new(0, 6, 0, 0)
+        icoL.BackgroundTransparency = 1
+        icoL.Text = ico
+        icoL.TextSize = 16
+        icoL.Font = Enum.Font.GothamBold
+        
+        -- اسم اللاعب
+        local nameL = Instance.new("TextLabel", row)
+        nameL.Size = UDim2.new(1, -100, 1, 0)
+        nameL.Position = UDim2.new(0, 32, 0, 0)
+        nameL.BackgroundTransparency = 1
+        nameL.Text = isMe and (name .. " ◀") or name
+        nameL.TextColor3 = isMe and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200,200,200)
+        nameL.TextSize = 11
+        nameL.Font = isMe and Enum.Font.GothamBold or Enum.Font.Gotham
+        nameL.TextXAlignment = Enum.TextXAlignment.Left
+        nameL.TextTruncate = Enum.TextTruncate.AtEnd
+        
+        -- الدور + معلومات إضافية للقاتل
+        local roleL = Instance.new("TextLabel", row)
+        roleL.Size = UDim2.new(0, 72, 1, 0)
+        roleL.Position = UDim2.new(1, -74, 0, 0)
+        roleL.BackgroundTransparency = 1
+        roleL.TextSize = 10
+        roleL.Font = Enum.Font.GothamBold
+        roleL.TextXAlignment = Enum.TextXAlignment.Right
+        
+        if isMurderer then
+            -- معلومات إضافية للقاتل: عدد اللاعبين المتبقيين وحالة التخفي
+            local alivePlayers = 0
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+                    alivePlayers = alivePlayers + 1
+                end
+            end
+            local isHidden = false
+            -- التحقق من حالة التخفي (إذا كان القاتل لديه قدرة التخفي)
+            local character = LocalPlayer.Character
+            if character then
+                for _, child in ipairs(character:GetChildren()) do
+                    if child:IsA("Part") and child.Name == "Stealth" then
+                        isHidden = true
+                        break
+                    end
+                end
+            end
+            roleL.Text = "💀 " .. alivePlayers .. " متبقي" .. (isHidden and " 👻" or "")
+            roleL.TextColor3 = Color3.fromRGB(255, 200, 100)
+        else
+            roleL.Text = info.Role
+            roleL.TextColor3 = col
+        end
+    end
+    
+    -- تحديث حجم النافذة
+    RoleESP_Frame.Size = UDim2.new(0, 220, 0, 30 + #rows * 34 + 6)
+end
+
+-- ══ استقبال البيانات للـ Role ESP ══
+ReplicatedStorage.Remotes.Gameplay.Fade.OnClientEvent:Connect(function(data)
+    if type(data) ~= "table" then return end
+    BuildRoleList(data)
+end)
+
+-- إخفاء النافذة لما تنتهي الجولة
+local function HideRolePanel()
+    ClearRoleList()
+    RoleESP_Frame.Visible = false
+end
+
+pcall(function()
+    ReplicatedStorage.Remotes.Gameplay.RoundEnded.OnClientEvent:Connect(HideRolePanel)
+end)
+pcall(function()
+    ReplicatedStorage.Remotes.Gameplay.GameEnded.OnClientEvent:Connect(HideRolePanel)
+end)
+
+-- ==========================================================
+-- ⚙️ المحرك الأساسي للفارم
 -- ==========================================================
 local AutoCoin = false
 local UnderGroundDepth = 10
@@ -186,55 +481,101 @@ local function IsPlayerAlive()
     return true
 end
 
--- ==========================================================
--- ✅ فحص اللوبي المحسّن - الطريقة الصحيحة
--- ==========================================================
 local function IsInLobby()
-    -- الطريقة 1: فحص عدد الكوينز في الماب
     local coinCount = 0
     for _, v in pairs(Workspace:GetDescendants()) do
         if v:IsA("BasePart") and (v.Name == "Coin_Server" or v.Name == "Coin") then
             coinCount = coinCount + 1
         end
     end
-    
-    -- إذا كان عدد الكوينز أقل من 3، يعني في اللوبي
     if coinCount < 3 then
         return true
     end
-    
-    -- الطريقة 2: فحص وجود مجلد الماب
     local hasMap = false
     for _, child in pairs(Workspace:GetChildren()) do
         if child:IsA("Model") and child.Name ~= "Lobby" and child.Name ~= "Camera" and child ~= LocalPlayer.Character then
-            -- تأكد انه فيه أجزاء كافية
             if #child:GetChildren() > 3 then
                 hasMap = true
                 break
             end
         end
     end
-    
     if not hasMap then
         return true
     end
-    
-    -- الطريقة 3: فحص متغير الجولة (إن وجد)
     local roundActive = nil
     pcall(function()
         if ReplicatedStorage:FindFirstChild("RoundActive") then
             roundActive = ReplicatedStorage.RoundActive.Value
         end
     end)
-    
     if roundActive == false then
         return true
     end
-    
-    -- إذا وصلنا هنا، يعني إحنا في الجولة
     return false
 end
 
+-- ==========================================================
+-- 🔐 أحداث المفتاح
+-- ==========================================================
+KeyBtn.MouseButton1Click:Connect(function()
+    local input = KeyBox.Text
+    if CheckKey(input) then
+        KeyVerified = true
+        KeyStatus.Text = "✅ المفتاح صحيح! جاري التشغيل..."
+        KeyStatus.TextColor3 = Color3.fromRGB(0, 255, 100)
+        KeyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+        KeyBtn.Text = "✅ تم التحقق"
+        task.wait(0.5)
+        KeyFrame.Visible = false
+        MainFrame.Visible = true
+        OpenBtn.Visible = false
+        SendNotification("✅ تم تفعيل السكربت بنجاح!", Color3.fromRGB(0, 255, 100))
+    else
+        KeyStatus.Text = "❌ مفتاح خاطئ! حاول مجدداً"
+        KeyStatus.TextColor3 = Color3.fromRGB(255, 50, 50)
+        KeyBox.Text = ""
+        KeyBox.PlaceholderText = "مفتاح خاطئ... حاول مرة أخرى"
+        KeyBox.PlaceholderColor3 = Color3.fromRGB(255, 80, 80)
+        task.wait(1)
+        KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
+    end
+end)
+
+KeyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        KeyBtn.MouseButton1Click:Connect(function() end)()
+    end
+end)
+
+-- 💬 أحداث زر ديسكورد
+DiscordBtn.MouseButton1Click:Connect(function()
+    local discordLink = "https://discord.gg/2Zzu7ZHBb"
+    setclipboard(discordLink)
+    KeyStatus.Text = "📋 تم نسخ رابط الديسكورد!"
+    KeyStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
+    task.wait(1.5)
+    if not KeyVerified then
+        KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
+        KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
+
+CopyBtn.MouseButton1Click:Connect(function()
+    local discordLink = "https://discord.gg/2Zzu7ZHBb"
+    setclipboard(discordLink)
+    KeyStatus.Text = "📋 تم نسخ رابط الديسكورد!"
+    KeyStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
+    task.wait(1.5)
+    if not KeyVerified then
+        KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
+        KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
+
+-- ==========================================================
+-- 🎮 أحداث الواجهة الرئيسية
+-- ==========================================================
 CloseBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
     OpenBtn.Visible = true
@@ -315,7 +656,6 @@ task.spawn(function()
                 continue
             end
             
-            -- ⚠️ فحص اللوبي المحسّن
             if IsInLobby() then
                 StatusLabel.Text = "🏠 الحالة: في اللوبي (متوقف)"
                 if CurrentTween then
@@ -340,8 +680,6 @@ task.spawn(function()
                     Platform.CFrame = CFrame.new(TargetUnderPos.X, TargetUnderPos.Y - 2.5, TargetUnderPos.Z)
                     
                     local Distance = (Root.Position - TargetUnderPos).Magnitude
-                    
-                    -- قراءة السرعة المحددة من خانة النص
                     local customSpeed = tonumber(SpeedBox.Text) or 35
                     if customSpeed < 5 then customSpeed = 5 end
                     if customSpeed > 100 then customSpeed = 100 end
@@ -376,7 +714,6 @@ task.spawn(function()
                             firetouchinterest(Root, TargetCoin, 1)
                         end)
                         
-                        -- زيادة عداد الكوينز
                         CoinCount = CoinCount + 1
                         CoinCounter.Text = "🪙 الكوينز المجمعة: " .. CoinCount
                         
