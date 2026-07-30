@@ -1,74 +1,98 @@
 -- ==========================================================
--- 🪙 MM2 UNDERGROUND COIN FARMER (V19 - KEY SYSTEM + ROLE ESP)
+-- 🪙 MM2 - فارم 50 عملة + قتل الجميع (لما تكون القاتل فقط)
 -- ==========================================================
+local RS = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+local VirtualUser = game:GetService("VirtualUser")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
 
-if CoreGui:FindFirstChild("MM2_CoinFarmerV18") then
-    CoreGui.MM2_CoinFarmerV18:Destroy()
-end
+local LocalPlayer = Players.LocalPlayer
+
+-- البحث عن KillEvent
+local killEvent = RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("Gameplay") and RS.Remotes.Gameplay:FindFirstChild("KillEvent")
+if not killEvent then killEvent = RS:FindFirstChild("KillEvent") end
+if not killEvent then killEvent = RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("KillEvent") end
+
+-- حذف القديم
+pcall(function() 
+    if CoreGui:FindFirstChild("AMT_FarmerKiller") then CoreGui.AMT_FarmerKiller:Destroy() end
+end)
+pcall(function() 
+    if LocalPlayer.PlayerGui:FindFirstChild("AMT_FarmerKiller") then LocalPlayer.PlayerGui.AMT_FarmerKiller:Destroy() end
+end)
 if Workspace:FindFirstChild("UndergroundPlatform") then
     Workspace.UndergroundPlatform:Destroy()
 end
 
 -- ==========================================================
--- 🔑 نظام المفتاح (KEY SYSTEM)
+-- 🔑 المفتاح
 -- ==========================================================
-local KEY = "AYF:#1AMT_yzt" -- المفتاح المطلوب
+local KEY = "AYF:#1AMT_yzt"
 local KeyVerified = false
 
-local function CheckKey(inputKey)
-    return inputKey == KEY
-end
+-- ==========================================================
+-- ⚙️ المتغيرات
+-- ==========================================================
+local AutoEnabled = false
+local CollectedCoins = 0
+local TargetCoins = 50
+local UnderGroundDepth = 10
+local CurrentTween = nil
+local CollectedCoinObjects = {}
+local KillPhaseActive = false
+local RoundActive = false
+local MyRole = "Unknown"
+local RoleData = {} -- نخزن بيانات الأدوار هنا
+
+-- منصة تحت الأرض
+local Platform = Instance.new("Part")
+Platform.Name = "UndergroundPlatform"
+Platform.Size = Vector3.new(12, 1, 12)
+Platform.Anchored = true
+Platform.Transparency = 1
+Platform.CanCollide = true
+Platform.Parent = Workspace
 
 -- ==========================================================
--- 🎨 الواجهة الرئيسية
+-- 🎨 الواجهة
 -- ==========================================================
-local ScreenGui = Instance.new("ScreenGui", CoreGui)
-ScreenGui.Name = "MM2_CoinFarmerV18"
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AMT_FarmerKiller"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+pcall(function() ScreenGui.Parent = CoreGui end)
+if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 -- ==========================================================
--- 🔐 نافذة إدخال المفتاح
+-- 🔐 نافذة المفتاح
 -- ==========================================================
 local KeyFrame = Instance.new("Frame", ScreenGui)
-KeyFrame.Size = UDim2.new(0, 340, 0, 230)
-KeyFrame.Position = UDim2.new(0.5, -170, 0.5, -115)
+KeyFrame.Size = UDim2.new(0, 340, 0, 250)
+KeyFrame.Position = UDim2.new(0.5, -170, 0.5, -125)
 KeyFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 KeyFrame.BorderSizePixel = 0
 KeyFrame.Active = true
 KeyFrame.Draggable = true
 Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 10)
-local KeyStroke = Instance.new("UIStroke", KeyFrame)
-KeyStroke.Color = Color3.fromRGB(130, 0, 255)
-KeyStroke.Thickness = 2.5
+Instance.new("UIStroke", KeyFrame).Color = Color3.fromRGB(130, 0, 255)
 
 local KeyTitle = Instance.new("TextLabel", KeyFrame)
-KeyTitle.Size = UDim2.new(1, -20, 0, 35)
-KeyTitle.Position = UDim2.new(0, 10, 0, 5)
+KeyTitle.Size = UDim2.new(1, -20, 0, 30)
+KeyTitle.Position = UDim2.new(0, 10, 0, 10)
 KeyTitle.Text = "🔑 أدخل المفتاح"
 KeyTitle.TextColor3 = Color3.fromRGB(130, 0, 255)
 KeyTitle.Font = Enum.Font.GothamBold
 KeyTitle.TextSize = 16
 KeyTitle.BackgroundTransparency = 1
 
-local KeySubTitle = Instance.new("TextLabel", KeyFrame)
-KeySubTitle.Size = UDim2.new(1, -20, 0, 20)
-KeySubTitle.Position = UDim2.new(0, 10, 0, 38)
-KeySubTitle.Text = "لتشغيل سكربت جمع الكوينز"
-KeySubTitle.TextColor3 = Color3.fromRGB(150, 150, 180)
-KeySubTitle.Font = Enum.Font.Gotham
-KeySubTitle.TextSize = 11
-KeySubTitle.BackgroundTransparency = 1
-
 local KeyBox = Instance.new("TextBox", KeyFrame)
 KeyBox.Size = UDim2.new(1, -40, 0, 42)
-KeyBox.Position = UDim2.new(0, 20, 0, 62)
+KeyBox.Position = UDim2.new(0, 20, 0, 55)
 KeyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 KeyBox.Text = ""
 KeyBox.PlaceholderText = "أدخل المفتاح هنا..."
@@ -77,8 +101,6 @@ KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 KeyBox.Font = Enum.Font.GothamBold
 KeyBox.TextSize = 14
 Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0, 8)
-local KeyBoxStroke = Instance.new("UIStroke", KeyBox)
-KeyBoxStroke.Color = Color3.fromRGB(80, 0, 160)
 
 local KeyBtn = Instance.new("TextButton", KeyFrame)
 KeyBtn.Size = UDim2.new(0, 120, 0, 38)
@@ -90,36 +112,29 @@ KeyBtn.Font = Enum.Font.GothamBold
 KeyBtn.TextSize = 14
 Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 8)
 
--- 🎮 زر ديسكورد (أزرق صغير)
 local DiscordBtn = Instance.new("TextButton", KeyFrame)
-DiscordBtn.Size = UDim2.new(0, 100, 0, 25)
-DiscordBtn.Position = UDim2.new(0.5, -50, 0, 162)
+DiscordBtn.Size = UDim2.new(0, 100, 0, 30)
+DiscordBtn.Position = UDim2.new(0.5, -105, 0, 165)
 DiscordBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 DiscordBtn.Text = "💬 Discord"
 DiscordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 DiscordBtn.Font = Enum.Font.GothamBold
-DiscordBtn.TextSize = 11
+DiscordBtn.TextSize = 12
 Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0, 6)
-local DiscordStroke = Instance.new("UIStroke", DiscordBtn)
-DiscordStroke.Color = Color3.fromRGB(70, 80, 200)
-DiscordStroke.Thickness = 1
 
 local CopyBtn = Instance.new("TextButton", KeyFrame)
-CopyBtn.Size = UDim2.new(0, 28, 0, 25)
-CopyBtn.Position = UDim2.new(0.5, 55, 0, 162)
+CopyBtn.Size = UDim2.new(0, 100, 0, 30)
+CopyBtn.Position = UDim2.new(0.5, 5, 0, 165)
 CopyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-CopyBtn.Text = "📋"
+CopyBtn.Text = "📋 نسخ الرابط"
 CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CopyBtn.Font = Enum.Font.GothamBold
-CopyBtn.TextSize = 14
+CopyBtn.TextSize = 11
 Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 6)
-local CopyStroke = Instance.new("UIStroke", CopyBtn)
-CopyStroke.Color = Color3.fromRGB(60, 60, 70)
-CopyStroke.Thickness = 1
 
 local KeyStatus = Instance.new("TextLabel", KeyFrame)
 KeyStatus.Size = UDim2.new(1, -20, 0, 25)
-KeyStatus.Position = UDim2.new(0, 10, 0, 195)
+KeyStatus.Position = UDim2.new(0, 10, 0, 210)
 KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
 KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
 KeyStatus.Font = Enum.Font.Gotham
@@ -127,70 +142,55 @@ KeyStatus.TextSize = 11
 KeyStatus.BackgroundTransparency = 1
 
 -- ==========================================================
--- 🎨 الواجهة الرئيسية (تظهر بعد التحقق)
+-- 🎮 الواجهة الرئيسية
 -- ==========================================================
-local OpenBtn = Instance.new("TextButton", ScreenGui)
-OpenBtn.Size = UDim2.new(0, 60, 0, 35)
-OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
-OpenBtn.Text = "Coins 🪙"
-OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-OpenBtn.Font = Enum.Font.GothamBold
-OpenBtn.TextSize = 12
-OpenBtn.Visible = false
-Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 6)
-
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 340, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 340, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -175)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Visible = false
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
-
-local Stroke = Instance.new("UIStroke", MainFrame)
-Stroke.Color = Color3.fromRGB(130, 0, 255)
-Stroke.Thickness = 2.5
+Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(130, 0, 255)
 
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, -40, 0, 40)
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "AMT fram 🛡️"
+Title.Size = UDim2.new(1, -40, 0, 35)
+Title.Position = UDim2.new(0, 10, 0, 5)
+Title.Text = "🪙 فارم + قتل القاتل فقط"
 Title.TextColor3 = Color3.fromRGB(130, 0, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 11
+Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
 local CloseBtn = Instance.new("TextButton", MainFrame)
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 6)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 20)
-CloseBtn.Text = "X"
+CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 14
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
-local FarmBtn = Instance.new("TextButton", MainFrame)
-FarmBtn.Size = UDim2.new(1, -20, 0, 35)
-FarmBtn.Position = UDim2.new(0, 10, 0, 45)
-FarmBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-FarmBtn.Text = "التجميع الذكي : OFF"
-FarmBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-FarmBtn.Font = Enum.Font.GothamBold
-FarmBtn.TextSize = 12
-Instance.new("UICorner", FarmBtn).CornerRadius = UDim.new(0, 6)
-local BtnStroke = Instance.new("UIStroke", FarmBtn)
-BtnStroke.Color = Color3.fromRGB(35, 35, 40)
+local ToggleBtn = Instance.new("TextButton", MainFrame)
+ToggleBtn.Size = UDim2.new(1, -20, 0, 40)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 50)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+ToggleBtn.Text = "🔴 متوقف"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 14
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
+local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
+ToggleStroke.Color = Color3.fromRGB(255, 50, 50)
 
--- 🎛️ خانة تحديد السرعة المخصصة
 local SpeedLabel = Instance.new("TextLabel", MainFrame)
 SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
-SpeedLabel.Position = UDim2.new(0, 10, 0, 85)
-SpeedLabel.Text = "⚡ سرعة الانتقال (كلما زاد الرقم زادت السرعة): 35"
+SpeedLabel.Position = UDim2.new(0, 10, 0, 95)
+SpeedLabel.Text = "⚡ سرعة الانتقال (5-100): 35"
 SpeedLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
 SpeedLabel.Font = Enum.Font.GothamBold
 SpeedLabel.TextSize = 10
@@ -199,64 +199,81 @@ SpeedLabel.BackgroundTransparency = 1
 
 local SpeedBox = Instance.new("TextBox", MainFrame)
 SpeedBox.Size = UDim2.new(1, -20, 0, 30)
-SpeedBox.Position = UDim2.new(0, 10, 0, 108)
+SpeedBox.Position = UDim2.new(0, 10, 0, 118)
 SpeedBox.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 SpeedBox.Text = "35"
 SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedBox.Font = Enum.Font.GothamBold
 SpeedBox.TextSize = 13
 Instance.new("UICorner", SpeedBox).CornerRadius = UDim.new(0, 6)
-local BoxStroke = Instance.new("UIStroke", SpeedBox)
-BoxStroke.Color = Color3.fromRGB(80, 0, 160)
+Instance.new("UIStroke", SpeedBox).Color = Color3.fromRGB(80, 0, 160)
 
--- 🔔 إطار قائمة الإشعارات والتنبيهات
-local NotifyFrame = Instance.new("Frame", MainFrame)
-NotifyFrame.Size = UDim2.new(1, -20, 0, 85)
-NotifyFrame.Position = UDim2.new(0, 10, 0, 145)
-NotifyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-NotifyFrame.BorderSizePixel = 0
-Instance.new("UICorner", NotifyFrame).CornerRadius = UDim.new(0, 8)
-local NotifyStroke = Instance.new("UIStroke", NotifyFrame)
-NotifyStroke.Color = Color3.fromRGB(80, 0, 160)
-NotifyStroke.Thickness = 1.5
+local CoinLabel = Instance.new("TextLabel", MainFrame)
+CoinLabel.Size = UDim2.new(1, -20, 0, 30)
+CoinLabel.Position = UDim2.new(0, 10, 0, 155)
+CoinLabel.Text = "🪙 الكوينز: 0 / 50"
+CoinLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+CoinLabel.Font = Enum.Font.GothamBold
+CoinLabel.TextSize = 16
+CoinLabel.BackgroundTransparency = 1
 
-local NotifyLog = Instance.new("TextLabel", NotifyFrame)
-NotifyLog.Size = UDim2.new(1, -10, 0, 70)
-NotifyLog.Position = UDim2.new(0, 5, 0, 8)
-NotifyLog.Text = "• النظام جاهز.. تم منع التعليق وضبط السرعة."
-NotifyLog.TextColor3 = Color3.fromRGB(220, 220, 220)
-NotifyLog.Font = Enum.Font.Gotham
-NotifyLog.TextSize = 10
-NotifyLog.TextXAlignment = Enum.TextXAlignment.Left
-NotifyLog.TextYAlignment = Enum.TextYAlignment.Top
-NotifyLog.TextWrapped = true
-NotifyLog.BackgroundTransparency = 1
+local ProgressBar = Instance.new("Frame", MainFrame)
+ProgressBar.Size = UDim2.new(1, -20, 0, 8)
+ProgressBar.Position = UDim2.new(0, 10, 0, 190)
+ProgressBar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+ProgressBar.BorderSizePixel = 0
+Instance.new("UICorner", ProgressBar).CornerRadius = UDim.new(0, 4)
 
--- عرض عدد الكوينز المجمعة
-local CoinCounter = Instance.new("TextLabel", MainFrame)
-CoinCounter.Size = UDim2.new(1, -20, 0, 25)
-CoinCounter.Position = UDim2.new(0, 10, 0, 240)
-CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
-CoinCounter.TextColor3 = Color3.fromRGB(255, 255, 100)
-CoinCounter.Font = Enum.Font.GothamBold
-CoinCounter.TextSize = 12
-CoinCounter.BackgroundTransparency = 1
+local ProgressFill = Instance.new("Frame", ProgressBar)
+ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+ProgressFill.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+ProgressFill.BorderSizePixel = 0
+Instance.new("UICorner", ProgressFill).CornerRadius = UDim.new(0, 4)
 
 local StatusLabel = Instance.new("TextLabel", MainFrame)
 StatusLabel.Size = UDim2.new(1, -20, 0, 25)
-StatusLabel.Position = UDim2.new(0, 10, 0, 270)
-StatusLabel.Text = "⏳ الحالة: متوقف في اللوبي"
-StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.Position = UDim2.new(0, 10, 0, 205)
+StatusLabel.Text = "📊 الحالة: في اللوبي - بانتظار الجولة"
+StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.TextSize = 11
 StatusLabel.BackgroundTransparency = 1
 
+local RoleLabel = Instance.new("TextLabel", MainFrame)
+RoleLabel.Size = UDim2.new(1, -20, 0, 25)
+RoleLabel.Position = UDim2.new(0, 10, 0, 230)
+RoleLabel.Text = "🎭 دوري: غير معروف"
+RoleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+RoleLabel.Font = Enum.Font.GothamBold
+RoleLabel.TextSize = 11
+RoleLabel.BackgroundTransparency = 1
+
+local LogFrame = Instance.new("Frame", MainFrame)
+LogFrame.Size = UDim2.new(1, -20, 0, 60)
+LogFrame.Position = UDim2.new(0, 10, 0, 260)
+LogFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+LogFrame.BorderSizePixel = 0
+Instance.new("UICorner", LogFrame).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", LogFrame).Color = Color3.fromRGB(80, 0, 160)
+
+local LogText = Instance.new("TextLabel", LogFrame)
+LogText.Size = UDim2.new(1, -10, 1, -10)
+LogText.Position = UDim2.new(0, 5, 0, 5)
+LogText.Text = "• في انتظار التشغيل..."
+LogText.TextColor3 = Color3.fromRGB(200, 200, 200)
+LogText.Font = Enum.Font.Gotham
+LogText.TextSize = 10
+LogText.TextXAlignment = Enum.TextXAlignment.Left
+LogText.TextYAlignment = Enum.TextYAlignment.Top
+LogText.TextWrapped = true
+LogText.BackgroundTransparency = 1
+
 -- ==========================================================
--- 👥 ROLE ESP (نافذة الأدوار المخصصة)
+-- 🎯 Role ESP - نافذة القاتل والشريف
 -- ==========================================================
 local RoleESP_Frame = Instance.new("Frame", ScreenGui)
 RoleESP_Frame.Size = UDim2.new(0, 220, 0, 30)
-RoleESP_Frame.Position = UDim2.new(1, -230, 0, 60)
+RoleESP_Frame.Position = UDim2.new(1, -230, 0, 10)
 RoleESP_Frame.BackgroundColor3 = Color3.fromRGB(8, 8, 16)
 RoleESP_Frame.BorderSizePixel = 0
 RoleESP_Frame.AutomaticSize = Enum.AutomaticSize.Y
@@ -264,11 +281,8 @@ RoleESP_Frame.Visible = false
 RoleESP_Frame.Active = true
 RoleESP_Frame.Draggable = true
 Instance.new("UICorner", RoleESP_Frame).CornerRadius = UDim.new(0, 10)
-local RoleStroke = Instance.new("UIStroke", RoleESP_Frame)
-RoleStroke.Color = Color3.fromRGB(60, 100, 255)
-RoleStroke.Thickness = 1.5
+Instance.new("UIStroke", RoleESP_Frame).Color = Color3.fromRGB(60, 100, 255)
 
--- Header
 local RoleHdr = Instance.new("Frame", RoleESP_Frame)
 RoleHdr.Size = UDim2.new(1, 0, 0, 30)
 RoleHdr.BackgroundColor3 = Color3.fromRGB(60, 100, 255)
@@ -285,14 +299,12 @@ RoleHdrL.TextSize = 12
 RoleHdrL.Font = Enum.Font.GothamBold
 RoleHdrL.TextXAlignment = Enum.TextXAlignment.Left
 
--- قائمة اللاعبين
 local RoleList = Instance.new("Frame", RoleESP_Frame)
 RoleList.Size = UDim2.new(1, 0, 0, 0)
 RoleList.Position = UDim2.new(0, 0, 0, 30)
 RoleList.BackgroundTransparency = 1
 RoleList.AutomaticSize = Enum.AutomaticSize.Y
-local RoleLayout = Instance.new("UIListLayout", RoleList)
-RoleLayout.Padding = UDim.new(0, 2)
+Instance.new("UIListLayout", RoleList).Padding = UDim.new(0, 2)
 Instance.new("UIPadding", RoleList).PaddingLeft = UDim.new(0, 6)
 
 local function ClearRoleList()
@@ -303,27 +315,31 @@ local function ClearRoleList()
     end
 end
 
--- متغيرات لتخزين دور القاتل ومعلومات إضافية
-local MurdererData = nil
-local SheriffData = nil
-
-local function BuildRoleList(data)
+local function UpdateRoleESP()
     ClearRoleList()
-    MurdererData = nil
-    SheriffData = nil
     
-    -- البحث عن القاتل والشريف فقط
-    for name, info in pairs(data) do
-        if info.Role == "Murderer" then
-            MurdererData = {name = name, info = info}
-        elseif info.Role == "Sheriff" then
-            SheriffData = {name = name, info = info}
+    -- تحديث دوري من البيانات المخزنة
+    if RoleData[LocalPlayer.Name] then
+        MyRole = RoleData[LocalPlayer.Name].Role
+        if MyRole == "Murderer" then
+            RoleLabel.Text = "🎭 دوري: 🔪 القاتل"
+            RoleLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        elseif MyRole == "Sheriff" then
+            RoleLabel.Text = "🎭 دوري: 🔫 الشريف"
+            RoleLabel.TextColor3 = Color3.fromRGB(60, 100, 255)
+        else
+            RoleLabel.Text = "🎭 دوري: 👤 بريء"
+            RoleLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
         end
     end
     
+    -- بناء القائمة
     local rows = {}
-    if MurdererData then table.insert(rows, MurdererData) end
-    if SheriffData then table.insert(rows, SheriffData) end
+    for name, info in pairs(RoleData) do
+        if info.Role == "Murderer" or info.Role == "Sheriff" then
+            table.insert(rows, {name = name, role = info.Role})
+        end
+    end
     
     if #rows == 0 then
         RoleESP_Frame.Visible = false
@@ -332,165 +348,146 @@ local function BuildRoleList(data)
     
     RoleESP_Frame.Visible = true
     
+    -- ترتيب: القاتل أول
+    table.sort(rows, function(a, b)
+        if a.role == "Murderer" then return true end
+        if b.role == "Murderer" then return false end
+        return a.name < b.name
+    end)
+    
     for _, entry in ipairs(rows) do
-        local name = entry.name
-        local info = entry.info
-        local col = entry == MurdererData and Color3.fromRGB(220, 45, 45) or Color3.fromRGB(60, 100, 255)
-        local ico = entry == MurdererData and "🔪" or "🔫"
-        local isMe = name == LocalPlayer.Name
-        local isMurderer = entry == MurdererData
+        local isMurderer = entry.role == "Murderer"
+        local col = isMurderer and Color3.fromRGB(220, 45, 45) or Color3.fromRGB(60, 100, 255)
+        local ico = isMurderer and "🔪" or "🔫"
+        local isMe = entry.name == LocalPlayer.Name
         
         local row = Instance.new("Frame", RoleList)
-        row.Size = UDim2.new(1, -6, 0, 32)
-        row.BackgroundColor3 = isMe and Color3.fromRGB(20,20,50) or Color3.fromRGB(14,14,28)
-        row.BorderSizePixel = 0
+        row.Size = UDim2.new(1, -6, 0, 30)
+        row.BackgroundColor3 = isMe and Color3.fromRGB(20, 20, 50) or Color3.fromRGB(14, 14, 28)
         Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+        
         if isMe then
             local rs = Instance.new("UIStroke", row)
             rs.Color = col
             rs.Thickness = 1
         end
         
-        -- شريط جانبي
         local bar = Instance.new("Frame", row)
         bar.Size = UDim2.new(0, 3, 0.7, 0)
         bar.Position = UDim2.new(0, 0, 0.15, 0)
         bar.BackgroundColor3 = col
-        bar.BorderSizePixel = 0
-        Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
         
-        -- أيقونة الدور
-        local icoL = Instance.new("TextLabel", row)
-        icoL.Size = UDim2.new(0, 24, 1, 0)
-        icoL.Position = UDim2.new(0, 6, 0, 0)
-        icoL.BackgroundTransparency = 1
-        icoL.Text = ico
-        icoL.TextSize = 16
-        icoL.Font = Enum.Font.GothamBold
+        local icoLabel = Instance.new("TextLabel", row)
+        icoLabel.Size = UDim2.new(0, 20, 1, 0)
+        icoLabel.Position = UDim2.new(0, 6, 0, 0)
+        icoLabel.BackgroundTransparency = 1
+        icoLabel.Text = ico
+        icoLabel.TextSize = 14
         
-        -- اسم اللاعب
-        local nameL = Instance.new("TextLabel", row)
-        nameL.Size = UDim2.new(1, -100, 1, 0)
-        nameL.Position = UDim2.new(0, 32, 0, 0)
-        nameL.BackgroundTransparency = 1
-        nameL.Text = isMe and (name .. " ◀") or name
-        nameL.TextColor3 = isMe and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200,200,200)
-        nameL.TextSize = 11
-        nameL.Font = isMe and Enum.Font.GothamBold or Enum.Font.Gotham
-        nameL.TextXAlignment = Enum.TextXAlignment.Left
-        nameL.TextTruncate = Enum.TextTruncate.AtEnd
+        local nameLabel = Instance.new("TextLabel", row)
+        nameLabel.Size = UDim2.new(1, -80, 1, 0)
+        nameLabel.Position = UDim2.new(0, 28, 0, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = isMe and (entry.name .. " ◀") or entry.name
+        nameLabel.TextColor3 = isMe and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+        nameLabel.TextSize = 11
+        nameLabel.Font = isMe and Enum.Font.GothamBold or Enum.Font.Gotham
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
         
-        -- الدور + معلومات إضافية للقاتل
-        local roleL = Instance.new("TextLabel", row)
-        roleL.Size = UDim2.new(0, 72, 1, 0)
-        roleL.Position = UDim2.new(1, -74, 0, 0)
-        roleL.BackgroundTransparency = 1
-        roleL.TextSize = 10
-        roleL.Font = Enum.Font.GothamBold
-        roleL.TextXAlignment = Enum.TextXAlignment.Right
-        
-        if isMurderer then
-            -- معلومات إضافية للقاتل: عدد اللاعبين المتبقيين وحالة التخفي
-            local alivePlayers = 0
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
-                    alivePlayers = alivePlayers + 1
-                end
-            end
-            local isHidden = false
-            -- التحقق من حالة التخفي (إذا كان القاتل لديه قدرة التخفي)
-            local character = LocalPlayer.Character
-            if character then
-                for _, child in ipairs(character:GetChildren()) do
-                    if child:IsA("Part") and child.Name == "Stealth" then
-                        isHidden = true
-                        break
-                    end
-                end
-            end
-            roleL.Text = "💀 " .. alivePlayers .. " متبقي" .. (isHidden and " 👻" or "")
-            roleL.TextColor3 = Color3.fromRGB(255, 200, 100)
-        else
-            roleL.Text = info.Role
-            roleL.TextColor3 = col
-        end
+        local roleLabel = Instance.new("TextLabel", row)
+        roleLabel.Size = UDim2.new(0, 50, 1, 0)
+        roleLabel.Position = UDim2.new(1, -52, 0, 0)
+        roleLabel.BackgroundTransparency = 1
+        roleLabel.Text = isMurderer and "قاتل" or "شريف"
+        roleLabel.TextColor3 = col
+        roleLabel.TextSize = 10
+        roleLabel.Font = Enum.Font.GothamBold
+        roleLabel.TextXAlignment = Enum.TextXAlignment.Right
     end
     
-    -- تحديث حجم النافذة
-    RoleESP_Frame.Size = UDim2.new(0, 220, 0, 30 + #rows * 34 + 6)
+    RoleESP_Frame.Size = UDim2.new(0, 220, 0, 30 + #rows * 32 + 6)
 end
 
--- ══ استقبال البيانات للـ Role ESP ══
-ReplicatedStorage.Remotes.Gameplay.Fade.OnClientEvent:Connect(function(data)
-    if type(data) ~= "table" then return end
-    BuildRoleList(data)
+-- استقبال بيانات الأدوار وتخزينها
+pcall(function()
+    RS.Remotes.Gameplay.Fade.OnClientEvent:Connect(function(data)
+        if type(data) == "table" then
+            -- نخزن البيانات
+            for name, info in pairs(data) do
+                RoleData[name] = info
+            end
+            -- حدث النافذة
+            UpdateRoleESP()
+        end
+    end)
 end)
 
--- إخفاء النافذة لما تنتهي الجولة
-local function HideRolePanel()
+-- لما تنتهي الجولة نمسح البيانات
+local function ClearRoleData()
+    RoleData = {}
+    MyRole = "Unknown"
+    RoleLabel.Text = "🎭 دوري: غير معروف"
+    RoleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     ClearRoleList()
     RoleESP_Frame.Visible = false
 end
 
 pcall(function()
-    ReplicatedStorage.Remotes.Gameplay.RoundEnded.OnClientEvent:Connect(HideRolePanel)
+    RS.Remotes.Gameplay.RoundEnded.OnClientEvent:Connect(ClearRoleData)
 end)
 pcall(function()
-    ReplicatedStorage.Remotes.Gameplay.GameEnded.OnClientEvent:Connect(HideRolePanel)
+    RS.Remotes.Gameplay.GameEnded.OnClientEvent:Connect(ClearRoleData)
 end)
 
 -- ==========================================================
--- ⚙️ المحرك الأساسي للفارم
+-- 🎯 زر فتح القائمة
 -- ==========================================================
-local AutoCoin = false
-local UnderGroundDepth = 10
-local CollectedCoins = {}
-local CurrentTween = nil
-local CoinCount = 0
+local OpenBtn = Instance.new("TextButton", ScreenGui)
+OpenBtn.Size = UDim2.new(0, 50, 0, 50)
+OpenBtn.Position = UDim2.new(0, 10, 0.5, -25)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
+OpenBtn.Text = "🪙"
+OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenBtn.Font = Enum.Font.GothamBold
+OpenBtn.TextSize = 20
+OpenBtn.Visible = false
+Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 25)
+Instance.new("UIStroke", OpenBtn).Color = Color3.fromRGB(255, 255, 255)
 
-local Platform = Instance.new("Part")
-Platform.Name = "UndergroundPlatform"
-Platform.Size = Vector3.new(12, 1, 12)
-Platform.Anchored = true
-Platform.Transparency = 1
-Platform.CanCollide = true
-Platform.Parent = Workspace
-
-local function SendNotification(msg, color)
+-- ==========================================================
+-- 🛠️ الدوال المساعدة
+-- ==========================================================
+function AddLog(msg, color)
     local lines = {}
-    for line in NotifyLog.Text:gmatch("[^\n]+") do
+    for line in LogText.Text:gmatch("[^\n]+") do
         table.insert(lines, line)
     end
     while #lines >= 4 do
         table.remove(lines, 1)
     end
     table.insert(lines, "• " .. msg)
-    NotifyLog.Text = table.concat(lines, "\n")
-    if color then
-        NotifyLog.TextColor3 = color
-    end
+    LogText.Text = table.concat(lines, "\n")
+    if color then LogText.TextColor3 = color end
 end
 
 local function IsPlayerAlive()
-    local character = LocalPlayer.Character
-    if not character then return false end
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return false end
-    local root = character:FindFirstChild("HumanoidRootPart")
-    if not root then return false end
-    return true
+    local char = LocalPlayer.Character
+    if not char then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health <= 0 then return false end
+    return char:FindFirstChild("HumanoidRootPart") ~= nil
 end
 
-local function IsInLobby()
+local function IsInRound()
     local coinCount = 0
     for _, v in pairs(Workspace:GetDescendants()) do
         if v:IsA("BasePart") and (v.Name == "Coin_Server" or v.Name == "Coin") then
             coinCount = coinCount + 1
         end
     end
-    if coinCount < 3 then
-        return true
-    end
+    if coinCount < 3 then return false end
+    
     local hasMap = false
     for _, child in pairs(Workspace:GetChildren()) do
         if child:IsA("Model") and child.Name ~= "Lobby" and child.Name ~= "Camera" and child ~= LocalPlayer.Character then
@@ -500,82 +497,322 @@ local function IsInLobby()
             end
         end
     end
-    if not hasMap then
-        return true
-    end
-    local roundActive = nil
-    pcall(function()
-        if ReplicatedStorage:FindFirstChild("RoundActive") then
-            roundActive = ReplicatedStorage.RoundActive.Value
+    
+    return hasMap
+end
+
+local function GetNearestCoin(rootPos)
+    local nearest = nil
+    local shortestDist = math.huge
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") and (v.Name == "Coin_Server" or v.Name == "Coin") and not CollectedCoinObjects[v] then
+            local dist = (v.Position - rootPos).Magnitude
+            if dist < shortestDist then
+                shortestDist = dist
+                nearest = v
+            end
         end
-    end)
-    if roundActive == false then
-        return true
     end
-    return false
+    return nearest
 end
 
 -- ==========================================================
--- 🔐 أحداث المفتاح
+-- 🔪 دوال القتل
+-- ==========================================================
+local function pullAllPlayers()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    
+    local pos = root.Position
+    local lookVector = root.CFrame.LookVector
+    local rightVector = root.CFrame.RightVector
+    
+    local players = Players:GetPlayers()
+    local index = 0
+    
+    for _, player in ipairs(players) do
+        if player ~= LocalPlayer and player.Character then
+            local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                local row = math.floor(index / 4)
+                local col = index % 4
+                local offsetX = (col - 1.5) * 1.2
+                local offsetZ = row * 1.2 + 2
+                local targetPos = pos + (lookVector * offsetZ) + (rightVector * offsetX)
+                
+                pcall(function()
+                    targetRoot.CFrame = CFrame.new(targetPos, pos)
+                    targetRoot.Anchored = true
+                    local hum = player.Character:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        hum.WalkSpeed = 0
+                        hum.JumpPower = 0
+                        hum.PlatformStand = true
+                    end
+                    for _, part in ipairs(player.Character:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            part.Anchored = true
+                        end
+                    end
+                end)
+                index = index + 1
+            end
+        end
+    end
+    AddLog("✅ تم سحب " .. index .. " لاعبين", Color3.fromRGB(255, 200, 0))
+end
+
+local function equipKnife()
+    pcall(function()
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+        task.wait(0.05)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton1(Vector2.new(100, 500))
+    end)
+end
+
+local function attackAll()
+    for i = 1, 15 do
+        pcall(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton1(Vector2.new(500, 500))
+            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+            task.wait(0.02)
+            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+            VirtualInputManager:SendMouseButtonEvent(Vector2.new(500, 500), 1, true, game)
+            task.wait(0.02)
+            VirtualInputManager:SendMouseButtonEvent(Vector2.new(500, 500), 1, false, game)
+        end)
+        task.wait(0.05)
+    end
+end
+
+local function killWithRemote()
+    if not killEvent then return end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            pcall(function()
+                killEvent:FireServer(player.Name, Color3.fromRGB(25, 225, 25))
+                killEvent:FireServer(player.Name)
+                killEvent:FireServer(player)
+            end)
+        end
+    end
+end
+
+local function unfreezeAll()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character then
+            pcall(function()
+                local hum = player.Character:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum.WalkSpeed = 16
+                    hum.JumpPower = 50
+                    hum.PlatformStand = false
+                end
+                local root = player.Character:FindFirstChild("HumanoidRootPart")
+                if root then root.Anchored = false end
+                for _, part in ipairs(player.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.Anchored = false
+                    end
+                end
+            end)
+        end
+    end
+end
+
+local function executeKillPhase()
+    if KillPhaseActive then return end
+    if MyRole ~= "Murderer" then 
+        AddLog("⚠️ مش قاتل! دورك: " .. MyRole, Color3.fromRGB(255, 150, 0))
+        return 
+    end
+    
+    KillPhaseActive = true
+    
+    AddLog("🔪 أنت القاتل! بدء القتل الجماعي", Color3.fromRGB(255, 50, 50))
+    StatusLabel.Text = "🔪 الحالة: جاري القتل!"
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    
+    pullAllPlayers()
+    task.wait(0.3)
+    equipKnife()
+    task.wait(0.2)
+    attackAll()
+    task.wait(0.2)
+    killWithRemote()
+    task.wait(0.3)
+    unfreezeAll()
+    
+    AddLog("✅ تم القتل! إعادة تعيين العداد", Color3.fromRGB(0, 255, 100))
+    CollectedCoins = 0
+    CollectedCoinObjects = {}
+    CoinLabel.Text = "🪙 الكوينز: 0 / " .. TargetCoins
+    ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+    KillPhaseActive = false
+    
+    StatusLabel.Text = "🪙 الحالة: جاري جمع الكوينز من جديد"
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+end
+
+-- ==========================================================
+-- 🔄 الدورة الرئيسية للفارم
+-- ==========================================================
+local function farmLoop()
+    while AutoEnabled do
+        task.wait(0.1)
+        
+        if not IsPlayerAlive() then
+            StatusLabel.Text = "💀 الحالة: ميت - بانتظار الترسبن"
+            if CurrentTween then CurrentTween:Cancel(); CurrentTween = nil end
+            Platform.CFrame = CFrame.new(0, 99999, 0)
+            task.wait(1)
+            continue
+        end
+        
+        if not IsInRound() then
+            StatusLabel.Text = "🏠 الحالة: في اللوبي - بانتظار الجولة"
+            if CurrentTween then CurrentTween:Cancel(); CurrentTween = nil end
+            Platform.CFrame = CFrame.new(0, 99999, 0)
+            RoundActive = false
+            CollectedCoins = 0
+            CollectedCoinObjects = {}
+            CoinLabel.Text = "🪙 الكوينز: 0 / " .. TargetCoins
+            ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+            task.wait(1)
+            continue
+        end
+        
+        RoundActive = true
+        
+        -- إذا وصلنا لـ 50 عملة وكنت القاتل → اذبح الكل
+        if CollectedCoins >= TargetCoins and not KillPhaseActive and MyRole == "Murderer" then
+            executeKillPhase()
+            continue
+        end
+        
+        -- إذا وصلت لـ 50 عملة ومش قاتل → استمر في الجمع
+        if CollectedCoins >= TargetCoins and MyRole ~= "Murderer" and MyRole ~= "Unknown" then
+            AddLog("✅ 50 كوين! مستمر بالتجميع (دورك: " .. MyRole .. ")", Color3.fromRGB(100, 255, 100))
+            CollectedCoins = 0
+            CollectedCoinObjects = {}
+            CoinLabel.Text = "🪙 الكوينز: 0 / " .. TargetCoins
+            ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+        end
+        
+        -- طور جمع الكوينز
+        if not KillPhaseActive then
+            StatusLabel.Text = "🪙 الحالة: جاري جمع الكوينز (" .. CollectedCoins .. "/" .. TargetCoins .. ")"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+            
+            local char = LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if char and root then
+                local targetCoin = GetNearestCoin(root.Position)
+                
+                if targetCoin and targetCoin.Parent then
+                    local targetUnder = Vector3.new(targetCoin.Position.X, targetCoin.Position.Y - UnderGroundDepth, targetCoin.Position.Z)
+                    Platform.CFrame = CFrame.new(targetUnder.X, targetUnder.Y - 2.5, targetUnder.Z)
+                    
+                    local dist = (root.Position - targetUnder).Magnitude
+                    local speed = tonumber(SpeedBox.Text) or 35
+                    if speed < 5 then speed = 5 end
+                    if speed > 100 then speed = 100 end
+                    local tweenTime = dist / speed
+                    
+                    CurrentTween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetUnder)})
+                    CurrentTween:Play()
+                    
+                    while CurrentTween and CurrentTween.PlaybackState == Enum.PlaybackState.Playing do
+                        task.wait()
+                        if not AutoEnabled or not IsPlayerAlive() or not IsInRound() then
+                            if CurrentTween then CurrentTween:Cancel() end
+                            break
+                        end
+                    end
+                    
+                    if AutoEnabled and IsPlayerAlive() and IsInRound() and targetCoin and targetCoin.Parent then
+                        local undergroundCF = root.CFrame
+                        local upTween = TweenService:Create(root, TweenInfo.new(0.2, Enum.EasingStyle.Linear), {CFrame = targetCoin.CFrame})
+                        upTween:Play()
+                        task.wait(0.25)
+                        
+                        pcall(function()
+                            firetouchinterest(root, targetCoin, 0)
+                            firetouchinterest(root, targetCoin, 1)
+                        end)
+                        
+                        CollectedCoins = CollectedCoins + 1
+                        CollectedCoinObjects[targetCoin] = true
+                        CoinLabel.Text = "🪙 الكوينز: " .. CollectedCoins .. " / " .. TargetCoins
+                        ProgressFill.Size = UDim2.new(CollectedCoins / TargetCoins, 0, 1, 0)
+                        AddLog("🪙 تم جمع كوين! (" .. CollectedCoins .. "/" .. TargetCoins .. ")", Color3.fromRGB(255, 255, 0))
+                        
+                        local downTween = TweenService:Create(root, TweenInfo.new(0.2, Enum.EasingStyle.Linear), {CFrame = undergroundCF})
+                        downTween:Play()
+                        task.wait(0.25)
+                    end
+                else
+                    CollectedCoinObjects = {}
+                    task.wait(0.5)
+                end
+            end
+        end
+    end
+end
+
+-- ==========================================================
+-- 🎮 أحداث الأزرار
 -- ==========================================================
 KeyBtn.MouseButton1Click:Connect(function()
-    local input = KeyBox.Text
-    if CheckKey(input) then
+    if KeyBox.Text == KEY then
         KeyVerified = true
-        KeyStatus.Text = "✅ المفتاح صحيح! جاري التشغيل..."
+        KeyStatus.Text = "✅ تم التحقق! جاري التشغيل..."
         KeyStatus.TextColor3 = Color3.fromRGB(0, 255, 100)
-        KeyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
-        KeyBtn.Text = "✅ تم التحقق"
         task.wait(0.5)
         KeyFrame.Visible = false
         MainFrame.Visible = true
         OpenBtn.Visible = false
-        SendNotification("✅ تم تفعيل السكربت بنجاح!", Color3.fromRGB(0, 255, 100))
+        AutoEnabled = true
+        ToggleBtn.Text = "🟢 يعمل - فارم + قتل"
+        ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 40, 15)
+        ToggleStroke.Color = Color3.fromRGB(0, 255, 100)
+        AddLog("✅ تم التشغيل! بانتظار بدء الجولة...", Color3.fromRGB(0, 255, 100))
+        task.spawn(farmLoop)
     else
-        KeyStatus.Text = "❌ مفتاح خاطئ! حاول مجدداً"
+        KeyStatus.Text = "❌ مفتاح خاطئ!"
         KeyStatus.TextColor3 = Color3.fromRGB(255, 50, 50)
         KeyBox.Text = ""
-        KeyBox.PlaceholderText = "مفتاح خاطئ... حاول مرة أخرى"
-        KeyBox.PlaceholderColor3 = Color3.fromRGB(255, 80, 80)
-        task.wait(1)
-        KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
     end
 end)
 
-KeyBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        KeyBtn.MouseButton1Click:Connect(function() end)()
+ToggleBtn.MouseButton1Click:Connect(function()
+    AutoEnabled = not AutoEnabled
+    if AutoEnabled then
+        ToggleBtn.Text = "🟢 يعمل - فارم + قتل"
+        ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 40, 15)
+        ToggleStroke.Color = Color3.fromRGB(0, 255, 100)
+        AddLog("✅ تم التشغيل!", Color3.fromRGB(0, 255, 100))
+        task.spawn(farmLoop)
+    else
+        ToggleBtn.Text = "🔴 متوقف"
+        ToggleBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+        ToggleStroke.Color = Color3.fromRGB(255, 50, 50)
+        if CurrentTween then CurrentTween:Cancel(); CurrentTween = nil end
+        Platform.CFrame = CFrame.new(0, 99999, 0)
+        unfreezeAll()
+        AddLog("⏹ تم الإيقاف!", Color3.fromRGB(255, 100, 100))
     end
 end)
 
--- 💬 أحداث زر ديسكورد
-DiscordBtn.MouseButton1Click:Connect(function()
-    local discordLink = "https://discord.gg/HWGqaEetd"
-    setclipboard(discordLink)
-    KeyStatus.Text = "📋 تم نسخ رابط الديسكورد!"
-    KeyStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
-    task.wait(1.5)
-    if not KeyVerified then
-        KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
-        KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
-    end
-end)
-
-CopyBtn.MouseButton1Click:Connect(function()
-    local discordLink = "https://discord.gg/2Zzu7ZHBb"
-    setclipboard(discordLink)
-    KeyStatus.Text = "📋 تم نسخ رابط الديسكورد!"
-    KeyStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
-    task.wait(1.5)
-    if not KeyVerified then
-        KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
-        KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
-    end
-end)
-
--- ==========================================================
--- 🎮 أحداث الواجهة الرئيسية
--- ==========================================================
 CloseBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
     OpenBtn.Visible = true
@@ -586,30 +823,35 @@ OpenBtn.MouseButton1Click:Connect(function()
     OpenBtn.Visible = false
 end)
 
-FarmBtn.MouseButton1Click:Connect(function()
-    AutoCoin = not AutoCoin
-    if AutoCoin then
-        FarmBtn.Text = "التجميع الذكي : ON ✅"
-        FarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        FarmBtn.BackgroundColor3 = Color3.fromRGB(45, 15, 70)
-        BtnStroke.Color = Color3.fromRGB(130, 0, 255)
-        CollectedCoins = {}
-        CoinCount = 0
-        CoinCounter.Text = "💴 الكوينز المجمعة: 0"
-        SendNotification("✅ تم تفعيل الفارم السلس.", Color3.fromRGB(0, 255, 150))
-    else
-        FarmBtn.Text = "التجميع الذكي : OFF"
-        FarmBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-        FarmBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-        BtnStroke.Color = Color3.fromRGB(35, 35, 40)
-        if CurrentTween then CurrentTween:Cancel() end
-        Platform.CFrame = CFrame.new(0, 99999, 0)
-        SendNotification("⏹ تم إيقاف الفارم يدوياً.", Color3.fromRGB(255, 100, 100))
+DiscordBtn.MouseButton1Click:Connect(function()
+    local discordLink = "https://discord.gg/HWGqaEetd"
+    pcall(function() setclipboard(discordLink) end)
+    KeyStatus.Text = "📋 تم نسخ رابط الديسكورد!"
+    KeyStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
+    task.wait(2)
+    if not KeyVerified then
+        KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
+        KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
     end
 end)
 
+CopyBtn.MouseButton1Click:Connect(function()
+    local discordLink = "https://discord.gg/HWGqaEetd"
+    pcall(function() setclipboard(discordLink) end)
+    KeyStatus.Text = "📋 تم نسخ الرابط!"
+    KeyStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
+    task.wait(2)
+    if not KeyVerified then
+        KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
+        KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
+
+-- ==========================================================
+-- 🛡️ منع التصادم
+-- ==========================================================
 RunService.Stepped:Connect(function()
-    if AutoCoin and LocalPlayer.Character then
+    if AutoEnabled and LocalPlayer.Character then
         for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = false
@@ -623,114 +865,29 @@ LocalPlayer.CharacterAdded:Connect(function()
         CurrentTween:Cancel()
         CurrentTween = nil
     end
-    CoinCount = 0
-    CoinCounter.Text = "🪙 الكوينز المجمعة: 0"
-    SendNotification("🔄 تم رصد إعادة الترسبن.", Color3.fromRGB(255, 200, 0))
 end)
 
-local function GetNearestValidCoin(rootPos)
-    local nearest = nil
-    local shortestDist = math.huge
-    for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") and (v.Name == "Coin_Server" or v.Name == "Coin") and not CollectedCoins[v] then
-            local dist = (v.Position - rootPos).Magnitude
-            if dist < shortestDist then
-                shortestDist = dist
-                nearest = v
-            end
-        end
-    end
-    return nearest
-end
-
-task.spawn(function()
-    while true do
-        task.wait(0.2)
-        
-        if AutoCoin then
-            if not IsPlayerAlive() then
-                StatusLabel.Text = "💀 الحالة: ميت / بانتظار الترسبن"
-                if CurrentTween then CurrentTween:Cancel() end
-                Platform.CFrame = CFrame.new(0, 99999, 0)
-                task.wait(1)
-                continue
-            end
-            
-            if IsInLobby() then
-                StatusLabel.Text = "🏠 الحالة: في اللوبي (متوقف)"
-                if CurrentTween then
-                    CurrentTween:Cancel()
-                    CurrentTween = nil
-                end
-                Platform.CFrame = CFrame.new(0, 99999, 0)
-                task.wait(1)
-                continue
-            end
-            
-            local Character = LocalPlayer.Character
-            local Root = Character and Character:FindFirstChild("HumanoidRootPart")
-            
-            if Character and Root then
-                local TargetCoin = GetNearestValidCoin(Root.Position)
-                
-                if TargetCoin and TargetCoin.Parent then
-                    StatusLabel.Text = "🪙 الحالة: داخل الماب - جاري التجميع"
-                    
-                    local TargetUnderPos = Vector3.new(TargetCoin.Position.X, TargetCoin.Position.Y - UnderGroundDepth, TargetCoin.Position.Z)
-                    Platform.CFrame = CFrame.new(TargetUnderPos.X, TargetUnderPos.Y - 2.5, TargetUnderPos.Z)
-                    
-                    local Distance = (Root.Position - TargetUnderPos).Magnitude
-                    local customSpeed = tonumber(SpeedBox.Text) or 35
-                    if customSpeed < 5 then customSpeed = 5 end
-                    if customSpeed > 100 then customSpeed = 100 end
-                    
-                    local TweenTime = Distance / customSpeed 
-                    local TInfo = TweenInfo.new(TweenTime, Enum.EasingStyle.Linear)
-                    
-                    CurrentTween = TweenService:Create(Root, TInfo, {CFrame = CFrame.new(TargetUnderPos)})
-                    CurrentTween:Play()
-                    
-                    while CurrentTween and CurrentTween.PlaybackState == Enum.PlaybackState.Playing do
-                        task.wait()
-                        if not AutoCoin or not IsPlayerAlive() or IsInLobby() then
-                            if CurrentTween then CurrentTween:Cancel() end
-                            break
-                        end
-                    end
-                    
-                    if AutoCoin and IsPlayerAlive() and not IsInLobby() and TargetCoin and TargetCoin.Parent then
-                        StatusLabel.Text = "⚡ التقاط الكوين"
-                        local undergroundCFrame = Root.CFrame
-                        local CoinPos = TargetCoin.CFrame
-                        
-                        local UpTweenTime = 0.2
-                        local UpTInfo = TweenInfo.new(UpTweenTime, Enum.EasingStyle.Linear)
-                        local UpTween = TweenService:Create(Root, UpTInfo, {CFrame = CoinPos})
-                        UpTween:Play()
-                        task.wait(UpTweenTime)
-                        
-                        pcall(function()
-                            firetouchinterest(Root, TargetCoin, 0)
-                            firetouchinterest(Root, TargetCoin, 1)
-                        end)
-                        
-                        CoinCount = CoinCount + 1
-                        CoinCounter.Text = "🪙 الكوينز المجمعة: " .. CoinCount
-                        
-                        CollectedCoins[TargetCoin] = true
-                        SendNotification("✅ تم جمع الكوين! (" .. CoinCount .. ")", Color3.fromRGB(0, 255, 100))
-                        task.wait(0.02)
-                        
-                        local DownTween = TweenService:Create(Root, UpTInfo, {CFrame = undergroundCFrame})
-                        DownTween:Play()
-                        task.wait(UpTweenTime)
-                    end
-                else
-                    StatusLabel.Text = "🔍 بانتظار كوينز جديدة..."
-                    CollectedCoins = {}
-                    task.wait(0.5)
-                end
-            end
+-- ==========================================================
+-- ⌨️ اختصارات
+-- ==========================================================
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        AutoEnabled = not AutoEnabled
+        if AutoEnabled then
+            ToggleBtn.Text = "🟢 يعمل - فارم + قتل"
+            ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
+            ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 40, 15)
+            ToggleStroke.Color = Color3.fromRGB(0, 255, 100)
+            task.spawn(farmLoop)
+        else
+            ToggleBtn.Text = "🔴 متوقف"
+            ToggleBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+            ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+            ToggleStroke.Color = Color3.fromRGB(255, 50, 50)
+            if CurrentTween then CurrentTween:Cancel(); CurrentTween = nil end
+            Platform.CFrame = CFrame.new(0, 99999, 0)
+            unfreezeAll()
         end
     end
 end)
