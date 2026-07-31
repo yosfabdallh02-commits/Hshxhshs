@@ -1456,4 +1456,4 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 print("✅ السكربت جاهز!")
-print("👑 لوحة الأدمن تظهر لـ tegrugjvd فقط")
+print("👑 لوحة الأدمن تظهر لـ tegrugjvd فقط")  
