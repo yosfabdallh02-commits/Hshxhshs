@@ -36,6 +36,29 @@ local KEY = "AYF:#2New2we"
 local KeyVerified = false
 
 -- ==========================================================
+-- 🛡️ Anti-AFK
+-- ==========================================================
+local AFKMode = false
+
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(60)
+        pcall(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+            task.wait(0.1)
+            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+        end)
+    end
+end)
+
+-- ==========================================================
 -- ⚙️ المتغيرات
 -- ==========================================================
 local AutoEnabled = false
@@ -47,7 +70,8 @@ local CollectedCoinObjects = {}
 local KillPhaseActive = false
 local RoundActive = false
 local MyRole = "Unknown"
-local RoleData = {} -- نخزن بيانات الأدوار هنا
+local RoleData = {}
+local InLobby = true
 
 -- منصة تحت الأرض
 local Platform = Instance.new("Part")
@@ -145,8 +169,8 @@ KeyStatus.BackgroundTransparency = 1
 -- 🎮 الواجهة الرئيسية
 -- ==========================================================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 340, 0, 350)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -175)
+MainFrame.Size = UDim2.new(0, 340, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -190)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -158,7 +182,7 @@ Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(130, 0, 255)
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, -40, 0, 35)
 Title.Position = UDim2.new(0, 10, 0, 5)
-Title.Text = "🪙 فارم + قتل القاتل فقط"
+Title.Text = "AMTframbata"
 Title.TextColor3 = Color3.fromRGB(130, 0, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -187,9 +211,20 @@ Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
 local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
 ToggleStroke.Color = Color3.fromRGB(255, 50, 50)
 
+-- زر AFK
+local AFKBtn = Instance.new("TextButton", MainFrame)
+AFKBtn.Size = UDim2.new(1, -20, 0, 35)
+AFKBtn.Position = UDim2.new(0, 10, 0, 95)
+AFKBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 120)
+AFKBtn.Text = "💤 تفعيل وضع AFK"
+AFKBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AFKBtn.Font = Enum.Font.GothamBold
+AFKBtn.TextSize = 13
+Instance.new("UICorner", AFKBtn).CornerRadius = UDim.new(0, 8)
+
 local SpeedLabel = Instance.new("TextLabel", MainFrame)
 SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
-SpeedLabel.Position = UDim2.new(0, 10, 0, 95)
+SpeedLabel.Position = UDim2.new(0, 10, 0, 135)
 SpeedLabel.Text = "⚡ سرعة الانتقال (5-100): 35"
 SpeedLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
 SpeedLabel.Font = Enum.Font.GothamBold
@@ -199,7 +234,7 @@ SpeedLabel.BackgroundTransparency = 1
 
 local SpeedBox = Instance.new("TextBox", MainFrame)
 SpeedBox.Size = UDim2.new(1, -20, 0, 30)
-SpeedBox.Position = UDim2.new(0, 10, 0, 118)
+SpeedBox.Position = UDim2.new(0, 10, 0, 158)
 SpeedBox.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 SpeedBox.Text = "35"
 SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -210,7 +245,7 @@ Instance.new("UIStroke", SpeedBox).Color = Color3.fromRGB(80, 0, 160)
 
 local CoinLabel = Instance.new("TextLabel", MainFrame)
 CoinLabel.Size = UDim2.new(1, -20, 0, 30)
-CoinLabel.Position = UDim2.new(0, 10, 0, 155)
+CoinLabel.Position = UDim2.new(0, 10, 0, 195)
 CoinLabel.Text = "🪙 الكوينز: 0 / 50"
 CoinLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
 CoinLabel.Font = Enum.Font.GothamBold
@@ -219,7 +254,7 @@ CoinLabel.BackgroundTransparency = 1
 
 local ProgressBar = Instance.new("Frame", MainFrame)
 ProgressBar.Size = UDim2.new(1, -20, 0, 8)
-ProgressBar.Position = UDim2.new(0, 10, 0, 190)
+ProgressBar.Position = UDim2.new(0, 10, 0, 230)
 ProgressBar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 ProgressBar.BorderSizePixel = 0
 Instance.new("UICorner", ProgressBar).CornerRadius = UDim.new(0, 4)
@@ -232,7 +267,7 @@ Instance.new("UICorner", ProgressFill).CornerRadius = UDim.new(0, 4)
 
 local StatusLabel = Instance.new("TextLabel", MainFrame)
 StatusLabel.Size = UDim2.new(1, -20, 0, 25)
-StatusLabel.Position = UDim2.new(0, 10, 0, 205)
+StatusLabel.Position = UDim2.new(0, 10, 0, 245)
 StatusLabel.Text = "📊 الحالة: في اللوبي - بانتظار الجولة"
 StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 StatusLabel.Font = Enum.Font.Gotham
@@ -241,7 +276,7 @@ StatusLabel.BackgroundTransparency = 1
 
 local RoleLabel = Instance.new("TextLabel", MainFrame)
 RoleLabel.Size = UDim2.new(1, -20, 0, 25)
-RoleLabel.Position = UDim2.new(0, 10, 0, 230)
+RoleLabel.Position = UDim2.new(0, 10, 0, 270)
 RoleLabel.Text = "🎭 دوري: غير معروف"
 RoleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 RoleLabel.Font = Enum.Font.GothamBold
@@ -250,7 +285,7 @@ RoleLabel.BackgroundTransparency = 1
 
 local LogFrame = Instance.new("Frame", MainFrame)
 LogFrame.Size = UDim2.new(1, -20, 0, 60)
-LogFrame.Position = UDim2.new(0, 10, 0, 260)
+LogFrame.Position = UDim2.new(0, 10, 0, 300)
 LogFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 LogFrame.BorderSizePixel = 0
 Instance.new("UICorner", LogFrame).CornerRadius = UDim.new(0, 8)
@@ -267,6 +302,61 @@ LogText.TextXAlignment = Enum.TextXAlignment.Left
 LogText.TextYAlignment = Enum.TextYAlignment.Top
 LogText.TextWrapped = true
 LogText.BackgroundTransparency = 1
+
+-- ==========================================================
+-- 💤 شاشة AFK - تغطي الشاشة كاملة
+-- ==========================================================
+local AFKScreen = Instance.new("Frame", ScreenGui)
+AFKScreen.Size = UDim2.new(1, 0, 1, 0)
+AFKScreen.Position = UDim2.new(0, 0, 0, 0)
+AFKScreen.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+AFKScreen.BackgroundTransparency = 0.3
+AFKScreen.BorderSizePixel = 0
+AFKScreen.Visible = false
+AFKScreen.ZIndex = 999
+
+local AFKOverlay = Instance.new("Frame", AFKScreen)
+AFKOverlay.Size = UDim2.new(0, 400, 0, 250)
+AFKOverlay.Position = UDim2.new(0.5, -200, 0.5, -125)
+AFKOverlay.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+AFKOverlay.BorderSizePixel = 0
+Instance.new("UICorner", AFKOverlay).CornerRadius = UDim.new(0, 15)
+Instance.new("UIStroke", AFKOverlay).Color = Color3.fromRGB(130, 0, 255)
+
+local AFKIcon = Instance.new("TextLabel", AFKOverlay)
+AFKIcon.Size = UDim2.new(0, 80, 0, 80)
+AFKIcon.Position = UDim2.new(0.5, -40, 0, 20)
+AFKIcon.Text = "💤"
+AFKIcon.TextSize = 60
+AFKIcon.BackgroundTransparency = 1
+
+local AFKTitle = Instance.new("TextLabel", AFKOverlay)
+AFKTitle.Size = UDim2.new(1, -40, 0, 30)
+AFKTitle.Position = UDim2.new(0, 20, 0, 110)
+AFKTitle.Text = "أنت في وضع AFK"
+AFKTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AFKTitle.Font = Enum.Font.GothamBold
+AFKTitle.TextSize = 24
+AFKTitle.BackgroundTransparency = 1
+
+local AFKSubtitle = Instance.new("TextLabel", AFKOverlay)
+AFKSubtitle.Size = UDim2.new(1, -40, 0, 20)
+AFKSubtitle.Position = UDim2.new(0, 20, 0, 145)
+AFKSubtitle.Text = "السكربت شغال في الخلفية"
+AFKSubtitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+AFKSubtitle.Font = Enum.Font.Gotham
+AFKSubtitle.TextSize = 14
+AFKSubtitle.BackgroundTransparency = 1
+
+local AFKCloseBtn = Instance.new("TextButton", AFKOverlay)
+AFKCloseBtn.Size = UDim2.new(0, 200, 0, 45)
+AFKCloseBtn.Position = UDim2.new(0.5, -100, 0, 180)
+AFKCloseBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+AFKCloseBtn.Text = "❌ إغلاق وضع AFK"
+AFKCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AFKCloseBtn.Font = Enum.Font.GothamBold
+AFKCloseBtn.TextSize = 16
+Instance.new("UICorner", AFKCloseBtn).CornerRadius = UDim.new(0, 10)
 
 -- ==========================================================
 -- 🎯 Role ESP - نافذة القاتل والشريف
@@ -318,7 +408,6 @@ end
 local function UpdateRoleESP()
     ClearRoleList()
     
-    -- تحديث دوري من البيانات المخزنة
     if RoleData[LocalPlayer.Name] then
         MyRole = RoleData[LocalPlayer.Name].Role
         if MyRole == "Murderer" then
@@ -333,7 +422,6 @@ local function UpdateRoleESP()
         end
     end
     
-    -- بناء القائمة
     local rows = {}
     for name, info in pairs(RoleData) do
         if info.Role == "Murderer" or info.Role == "Sheriff" then
@@ -348,7 +436,6 @@ local function UpdateRoleESP()
     
     RoleESP_Frame.Visible = true
     
-    -- ترتيب: القاتل أول
     table.sort(rows, function(a, b)
         if a.role == "Murderer" then return true end
         if b.role == "Murderer" then return false end
@@ -409,37 +496,6 @@ local function UpdateRoleESP()
     RoleESP_Frame.Size = UDim2.new(0, 220, 0, 30 + #rows * 32 + 6)
 end
 
--- استقبال بيانات الأدوار وتخزينها
-pcall(function()
-    RS.Remotes.Gameplay.Fade.OnClientEvent:Connect(function(data)
-        if type(data) == "table" then
-            -- نخزن البيانات
-            for name, info in pairs(data) do
-                RoleData[name] = info
-            end
-            -- حدث النافذة
-            UpdateRoleESP()
-        end
-    end)
-end)
-
--- لما تنتهي الجولة نمسح البيانات
-local function ClearRoleData()
-    RoleData = {}
-    MyRole = "Unknown"
-    RoleLabel.Text = "🎭 دوري: غير معروف"
-    RoleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    ClearRoleList()
-    RoleESP_Frame.Visible = false
-end
-
-pcall(function()
-    RS.Remotes.Gameplay.RoundEnded.OnClientEvent:Connect(ClearRoleData)
-end)
-pcall(function()
-    RS.Remotes.Gameplay.GameEnded.OnClientEvent:Connect(ClearRoleData)
-end)
-
 -- ==========================================================
 -- 🎯 زر فتح القائمة
 -- ==========================================================
@@ -477,28 +533,6 @@ local function IsPlayerAlive()
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not hum or hum.Health <= 0 then return false end
     return char:FindFirstChild("HumanoidRootPart") ~= nil
-end
-
-local function IsInRound()
-    local coinCount = 0
-    for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") and (v.Name == "Coin_Server" or v.Name == "Coin") then
-            coinCount = coinCount + 1
-        end
-    end
-    if coinCount < 3 then return false end
-    
-    local hasMap = false
-    for _, child in pairs(Workspace:GetChildren()) do
-        if child:IsA("Model") and child.Name ~= "Lobby" and child.Name ~= "Camera" and child ~= LocalPlayer.Character then
-            if #child:GetChildren() > 3 then
-                hasMap = true
-                break
-            end
-        end
-    end
-    
-    return hasMap
 end
 
 local function GetNearestCoin(rootPos)
@@ -666,19 +700,22 @@ local function farmLoop()
     while AutoEnabled do
         task.wait(0.1)
         
+        -- إذا مات
         if not IsPlayerAlive() then
             StatusLabel.Text = "💀 الحالة: ميت - بانتظار الترسبن"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
             if CurrentTween then CurrentTween:Cancel(); CurrentTween = nil end
             Platform.CFrame = CFrame.new(0, 99999, 0)
             task.wait(1)
             continue
         end
         
-        if not IsInRound() then
+        -- إذا مو في جولة = لوبي أو انتهت الجولة
+        if not RoundActive then
             StatusLabel.Text = "🏠 الحالة: في اللوبي - بانتظار الجولة"
+            StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 255)
             if CurrentTween then CurrentTween:Cancel(); CurrentTween = nil end
             Platform.CFrame = CFrame.new(0, 99999, 0)
-            RoundActive = false
             CollectedCoins = 0
             CollectedCoinObjects = {}
             CoinLabel.Text = "🪙 الكوينز: 0 / " .. TargetCoins
@@ -687,15 +724,11 @@ local function farmLoop()
             continue
         end
         
-        RoundActive = true
-        
-        -- إذا وصلنا لـ 50 عملة وكنت القاتل → اذبح الكل
         if CollectedCoins >= TargetCoins and not KillPhaseActive and MyRole == "Murderer" then
             executeKillPhase()
             continue
         end
         
-        -- إذا وصلت لـ 50 عملة ومش قاتل → استمر في الجمع
         if CollectedCoins >= TargetCoins and MyRole ~= "Murderer" and MyRole ~= "Unknown" then
             AddLog("✅ 50 كوين! مستمر بالتجميع (دورك: " .. MyRole .. ")", Color3.fromRGB(100, 255, 100))
             CollectedCoins = 0
@@ -704,7 +737,6 @@ local function farmLoop()
             ProgressFill.Size = UDim2.new(0, 0, 1, 0)
         end
         
-        -- طور جمع الكوينز
         if not KillPhaseActive then
             StatusLabel.Text = "🪙 الحالة: جاري جمع الكوينز (" .. CollectedCoins .. "/" .. TargetCoins .. ")"
             StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
@@ -730,13 +762,13 @@ local function farmLoop()
                     
                     while CurrentTween and CurrentTween.PlaybackState == Enum.PlaybackState.Playing do
                         task.wait()
-                        if not AutoEnabled or not IsPlayerAlive() or not IsInRound() then
+                        if not AutoEnabled or not IsPlayerAlive() or not RoundActive then
                             if CurrentTween then CurrentTween:Cancel() end
                             break
                         end
                     end
                     
-                    if AutoEnabled and IsPlayerAlive() and IsInRound() and targetCoin and targetCoin.Parent then
+                    if AutoEnabled and IsPlayerAlive() and RoundActive and targetCoin and targetCoin.Parent then
                         local undergroundCF = root.CFrame
                         local upTween = TweenService:Create(root, TweenInfo.new(0.2, Enum.EasingStyle.Linear), {CFrame = targetCoin.CFrame})
                         upTween:Play()
@@ -765,6 +797,68 @@ local function farmLoop()
         end
     end
 end
+
+-- ==========================================================
+-- 📡 مراقبة الرموتات - RoundStart & RoundEndFade
+-- ==========================================================
+pcall(function()
+    RS.Remotes.Gameplay.RoundStart.OnClientEvent:Connect(function(time, playersData)
+        print("🟢 RoundStart - بداية الجولة!")
+        
+        -- نخزن بيانات الأدوار
+        for name, info in pairs(playersData) do
+            RoleData[name] = info
+        end
+        UpdateRoleESP()
+        
+        -- تشغيل الفارم
+        RoundActive = true
+        InLobby = false
+        CollectedCoins = 0
+        CollectedCoinObjects = {}
+        CoinLabel.Text = "🪙 الكوينز: 0 / " .. TargetCoins
+        ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+        StatusLabel.Text = "🪙 الحالة: جاري جمع الكوينز"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+        AddLog("🟢 بدأت الجولة! جاري الفارم...", Color3.fromRGB(0, 255, 100))
+    end)
+end)
+
+pcall(function()
+    RS.Remotes.Gameplay.RoundEndFade.OnClientEvent:Connect(function()
+        print("🔴 RoundEndFade - انتهت الجولة!")
+        
+        -- إيقاف الفارم
+        RoundActive = false
+        InLobby = true
+        
+        if CurrentTween then
+            CurrentTween:Cancel()
+            CurrentTween = nil
+        end
+        Platform.CFrame = CFrame.new(0, 99999, 0)
+        unfreezeAll()
+        
+        StatusLabel.Text = "🏠 الحالة: انتهت الجولة - العودة للوبي"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
+        AddLog("🔴 انتهت الجولة! بانتظار الجولة القادمة", Color3.fromRGB(255, 100, 100))
+        
+        -- ننتظر شوي ثم نجهز للجولة الجديدة
+        task.wait(3)
+        if AutoEnabled then
+            StatusLabel.Text = "🏠 الحالة: في اللوبي - بانتظار الجولة"
+            StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 255)
+        end
+    end)
+end)
+
+pcall(function()
+    RS.Remotes.Gameplay.GameEnded.OnClientEvent:Connect(function()
+        RoundActive = false
+        InLobby = true
+        ClearRoleData()
+    end)
+end)
 
 -- ==========================================================
 -- 🎮 أحداث الأزرار
@@ -813,6 +907,30 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- زر AFK
+AFKBtn.MouseButton1Click:Connect(function()
+    AFKMode = not AFKMode
+    if AFKMode then
+        AFKScreen.Visible = true
+        AFKBtn.Text = "💤 إغلاق وضع AFK"
+        AFKBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        AddLog("💤 تم تفعيل وضع AFK", Color3.fromRGB(150, 150, 255))
+    else
+        AFKScreen.Visible = false
+        AFKBtn.Text = "💤 تفعيل وضع AFK"
+        AFKBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 120)
+        AddLog("✅ تم إغلاق وضع AFK", Color3.fromRGB(100, 255, 100))
+    end
+end)
+
+AFKCloseBtn.MouseButton1Click:Connect(function()
+    AFKMode = false
+    AFKScreen.Visible = false
+    AFKBtn.Text = "💤 تفعيل وضع AFK"
+    AFKBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 120)
+    AddLog("✅ تم إغلاق وضع AFK", Color3.fromRGB(100, 255, 100))
+end)
+
 CloseBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
     OpenBtn.Visible = true
@@ -851,7 +969,7 @@ end)
 -- 🛡️ منع التصادم
 -- ==========================================================
 RunService.Stepped:Connect(function()
-    if AutoEnabled and LocalPlayer.Character then
+    if AutoEnabled and RoundActive and LocalPlayer.Character then
         for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = false
@@ -889,5 +1007,20 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
             Platform.CFrame = CFrame.new(0, 99999, 0)
             unfreezeAll()
         end
+    elseif input.KeyCode == Enum.KeyCode.F3 then
+        AFKMode = not AFKMode
+        if AFKMode then
+            AFKScreen.Visible = true
+            AFKBtn.Text = "💤 إغلاق وضع AFK"
+            AFKBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        else
+            AFKScreen.Visible = false
+            AFKBtn.Text = "💤 تفعيل وضع AFK"
+            AFKBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 120)
+        end
     end
 end)
+
+print("✅ السكربت جاهز!")
+print("📌 يستنى RoundStart يبدأ الفارم")
+print("📌 يستنى RoundEndFade يوقف الفارم")
