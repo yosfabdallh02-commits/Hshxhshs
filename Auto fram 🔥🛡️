@@ -1,6 +1,6 @@
 -- ==========================================================
 -- 🪙 MM2 - فارم 50 عملة + قتل الجميع (لما تكون القاتل فقط)
--- مع لوحة تحكم الأدمن (تظهر لـ tegrugjvd فقط)
+-- مع لوحة تحكم الأدمن + نظام الكود السري (مسابقة قولدي)
 -- ==========================================================
 local RS = game:GetService("ReplicatedStorage")
 local UIS = game:GetService("UserInputService")
@@ -12,7 +12,6 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
-local MessagingService = game:GetService("MessagingService")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -31,6 +30,13 @@ end)
 if Workspace:FindFirstChild("UndergroundPlatform") then
     Workspace.UndergroundPlatform:Destroy()
 end
+
+-- تنظيف الـ Folder القديم إذا موجود
+pcall(function()
+    if Workspace:FindFirstChild("AMT_ActiveUsers") then
+        Workspace.AMT_ActiveUsers:Destroy()
+    end
+end)
 
 -- ==========================================================
 -- 🔑 المفتاح
@@ -103,8 +109,188 @@ local RoundActive = false
 local MyRole = "Unknown"
 local RoleData = {}
 
--- 🟢 قائمة المستخدمين النشطين (اللي معهم السكربت)
-local ActiveUsers = {} -- { [UserId] = {Name, DisplayName, Level, Coins, IsMurderer, LastPing} }
+-- 🟢 نظام تتبع المستخدمين النشطين
+local ActiveUsers = {}
+local AMT_Folder = nil
+
+-- 🟢 نظام الكود السري للمسابقة
+local SECRET_CODE = "loveme<3" -- الكود السري للمسابقة
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1533219330618032320/cMvjVqvvsN1_u2B3IISKLYfXTFpBEBhmeRSHte2brNLxQyarPcHM5U7zfZYd2XMssdL2"
+local CodeUsed = false
+
+-- دالة إرسال Webhook للديسكورد
+local function SendToDiscord(playerName, displayName, userId, rank)
+    local embed = {
+        title = "🎉 مشارك جديد في مسابقة قولدي!",
+        description = "مستخدم جديد دخل المسابقة!",
+        color = 16766720,
+        fields = {
+            {name = "👤 اسم المستخدم", value = displayName .. " (@" .. playerName .. ")", inline = false},
+            {name = "🆔 User ID", value = tostring(userId), inline = true},
+            {name = "🏆 الترتيب", value = "المشارك رقم #" .. rank, inline = true},
+            {name = "🎮 السيرفر", value = game.JobId, inline = false},
+        },
+        footer = {text = "AMT Script - مسابقة قولدي"},
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    }
+    
+    local payload = HttpService:JSONEncode({
+        embeds = {embed}
+    })
+    
+    pcall(function()
+        request({
+            Url = WEBHOOK_URL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = payload
+        })
+    end)
+end
+
+-- قراءة عدد المستخدمين اللي استخدموا الكود
+local function GetCodeCount()
+    local folder = Workspace:FindFirstChild("AMT_GoldyContest")
+    if folder then
+        local count = 0
+        for _, v in pairs(folder:GetChildren()) do
+            if v:IsA("BoolValue") then
+                count = count + 1
+            end
+        end
+        return count
+    end
+    return 0
+end
+
+-- تسجيل استخدام الكود
+local function RegisterCodeUsage()
+    pcall(function()
+        local folder = Workspace:FindFirstChild("AMT_GoldyContest")
+        if not folder then
+            folder = Instance.new("Folder")
+            folder.Name = "AMT_GoldyContest"
+            folder.Parent = Workspace
+        end
+        
+        local existing = folder:FindFirstChild(LocalPlayer.Name)
+        if not existing then
+            local tag = Instance.new("BoolValue")
+            tag.Name = LocalPlayer.Name
+            tag.Parent = folder
+            tag:SetAttribute("UserId", LocalPlayer.UserId)
+            tag:SetAttribute("DisplayName", LocalPlayer.DisplayName)
+            tag:SetAttribute("Time", os.time())
+            
+            local rank = GetCodeCount()
+            SendToDiscord(LocalPlayer.Name, LocalPlayer.DisplayName, LocalPlayer.UserId, rank)
+            
+            return true, rank
+        else
+            local rank = GetCodeCount()
+            return false, rank
+        end
+    end)
+    return false, 0
+end
+
+-- إنشاء أو الحصول على الفولدر الرئيسي
+local function SetupTrackingFolder()
+    if not AMT_Folder then
+        local existing = Workspace:FindFirstChild("AMT_ActiveUsers")
+        if existing then
+            for _, v in pairs(existing:GetChildren()) do
+                if v.Name ~= LocalPlayer.Name then
+                    local age = os.time() - (tonumber(v:GetAttribute("LastUpdate")) or 0)
+                    if age > 15 then
+                        pcall(function() v:Destroy() end)
+                    end
+                end
+            end
+            AMT_Folder = existing
+        else
+            AMT_Folder = Instance.new("Folder")
+            AMT_Folder.Name = "AMT_ActiveUsers"
+            pcall(function() AMT_Folder.Parent = Workspace end)
+        end
+    end
+end
+
+local function UpdateMyPresence()
+    pcall(function()
+        SetupTrackingFolder()
+        
+        local myTag = AMT_Folder:FindFirstChild(LocalPlayer.Name)
+        if not myTag then
+            myTag = Instance.new("BoolValue")
+            myTag.Name = LocalPlayer.Name
+            myTag.Parent = AMT_Folder
+        end
+        
+        myTag:SetAttribute("UserId", LocalPlayer.UserId)
+        myTag:SetAttribute("DisplayName", LocalPlayer.DisplayName)
+        myTag:SetAttribute("Coins", CollectedCoins)
+        myTag:SetAttribute("IsMurderer", (MyRole == "Murderer"))
+        myTag:SetAttribute("RoundActive", RoundActive)
+        myTag:SetAttribute("LastUpdate", os.time())
+    end)
+end
+
+local function ScanActiveUsers()
+    ActiveUsers = {}
+    if not AMT_Folder then return end
+    
+    local now = os.time()
+    for _, v in pairs(AMT_Folder:GetChildren()) do
+        if v:IsA("BoolValue") and v.Name ~= LocalPlayer.Name then
+            local lastUpdate = tonumber(v:GetAttribute("LastUpdate")) or 0
+            if now - lastUpdate <= 10 then
+                ActiveUsers[v:GetAttribute("UserId") or v.Name] = {
+                    Name = v.Name,
+                    DisplayName = v:GetAttribute("DisplayName") or v.Name,
+                    Coins = v:GetAttribute("Coins") or 0,
+                    IsMurderer = v:GetAttribute("IsMurderer") or false,
+                    RoundActive = v:GetAttribute("RoundActive") or false,
+                    LastUpdate = lastUpdate
+                }
+            end
+        end
+    end
+end
+
+local function CleanupOldTags()
+    pcall(function()
+        if not AMT_Folder then return end
+        local now = os.time()
+        for _, v in pairs(AMT_Folder:GetChildren()) do
+            if v:IsA("BoolValue") then
+                local lastUpdate = tonumber(v:GetAttribute("LastUpdate")) or 0
+                if now - lastUpdate > 20 then
+                    pcall(function() v:Destroy() end)
+                end
+            end
+        end
+    end)
+end
+
+task.spawn(function()
+    while KeyVerified do
+        task.wait(2)
+        if KeyVerified then
+            UpdateMyPresence()
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if KeyVerified then
+            ScanActiveUsers()
+            CleanupOldTags()
+        end
+    end
+end)
 
 local Platform = Instance.new("Part")
 Platform.Name = "UndergroundPlatform"
@@ -113,102 +299,6 @@ Platform.Anchored = true
 Platform.Transparency = 1
 Platform.CanCollide = true
 Platform.Parent = Workspace
-
--- ==========================================================
--- 📡 نظام الاتصال بين السكربتات (Ping System)
--- ==========================================================
-local PING_TOPIC = "AMT_FarmerKiller_Ping"
-local PONG_TOPIC = "AMT_FarmerKiller_Pong"
-
--- إرسال ping كل 3 ثواني عشان نعرف مين مفعل
-task.spawn(function()
-    while true do
-        task.wait(3)
-        if KeyVerified then
-            pcall(function()
-                local data = {
-                    UserId = LocalPlayer.UserId,
-                    Name = LocalPlayer.Name,
-                    DisplayName = LocalPlayer.DisplayName,
-                    Time = os.time()
-                }
-                MessagingService:PublishAsync(PING_TOPIC, HttpService:JSONEncode(data))
-            end)
-        end
-    end
-end)
-
--- استقبال pings من الآخرين
-task.spawn(function()
-    pcall(function()
-        MessagingService:SubscribeAsync(PING_TOPIC, function(message)
-            local success, data = pcall(function() return HttpService:JSONDecode(message.Data) end)
-            if success and data and data.UserId and data.UserId ~= LocalPlayer.UserId then
-                ActiveUsers[data.UserId] = {
-                    Name = data.Name,
-                    DisplayName = data.DisplayName,
-                    Level = 0, -- بنحدثه بعدين لو حاب
-                    Coins = 0,
-                    IsMurderer = false,
-                    LastPing = os.time()
-                }
-            end
-        end)
-    end)
-end)
-
--- تنظيف المستخدمين المنقطعين (ما أرسلوا ping من 10 ثواني)
-task.spawn(function()
-    while true do
-        task.wait(5)
-        local now = os.time()
-        for userId, info in pairs(ActiveUsers) do
-            if now - info.LastPing > 10 then
-                ActiveUsers[userId] = nil
-            end
-        end
-    end
-end)
-
--- إرسال تحديثات الحالة (لما تكون قاتل، كم كوين جمعت، إلخ)
-task.spawn(function()
-    while true do
-        task.wait(2)
-        if KeyVerified then
-            pcall(function()
-                local data = {
-                    UserId = LocalPlayer.UserId,
-                    Name = LocalPlayer.Name,
-                    DisplayName = LocalPlayer.DisplayName,
-                    Level = 0, -- تقدر تضيف level حقيقي لو ودك
-                    Coins = CollectedCoins,
-                    IsMurderer = (MyRole == "Murderer"),
-                    Time = os.time()
-                }
-                MessagingService:PublishAsync(PONG_TOPIC, HttpService:JSONEncode(data))
-            end)
-        end
-    end
-end)
-
--- استقبال تحديثات الحالة من الآخرين
-task.spawn(function()
-    pcall(function()
-        MessagingService:SubscribeAsync(PONG_TOPIC, function(message)
-            local success, data = pcall(function() return HttpService:JSONDecode(message.Data) end)
-            if success and data and data.UserId and data.UserId ~= LocalPlayer.UserId then
-                ActiveUsers[data.UserId] = {
-                    Name = data.Name,
-                    DisplayName = data.DisplayName,
-                    Level = data.Level or 0,
-                    Coins = data.Coins or 0,
-                    IsMurderer = data.IsMurderer or false,
-                    LastPing = os.time()
-                }
-            end
-        end)
-    end)
-end)
 
 -- ==========================================================
 -- 🎨 الواجهة الرئيسية
@@ -233,8 +323,8 @@ CreditsFrame.Visible = false
 CreditsFrame.ZIndex = 1000
 
 local CreditsOverlay = Instance.new("Frame", CreditsFrame)
-CreditsOverlay.Size = UDim2.new(0, 450, 0, 400)
-CreditsOverlay.Position = UDim2.new(0.5, -225, 0.5, -200)
+CreditsOverlay.Size = UDim2.new(0, 450, 0, 450)
+CreditsOverlay.Position = UDim2.new(0.5, -225, 0.5, -225)
 CreditsOverlay.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
 CreditsOverlay.BorderSizePixel = 0
 CreditsOverlay.ZIndex = 1001
@@ -287,15 +377,26 @@ CoOwnerLabel.TextSize = 16
 CoOwnerLabel.BackgroundTransparency = 1
 CoOwnerLabel.ZIndex = 1002
 
+-- 🖤 اسم الغامض [???] بلون أسود
+local MysteriousLabel = Instance.new("TextLabel", CreditsOverlay)
+MysteriousLabel.Size = UDim2.new(1, -20, 0, 30)
+MysteriousLabel.Position = UDim2.new(0, 10, 0, 160)
+MysteriousLabel.Text = "[???]: [???]"
+MysteriousLabel.TextColor3 = Color3.fromRGB(0, 0, 0) -- أسود
+MysteriousLabel.Font = Enum.Font.GothamBold
+MysteriousLabel.TextSize = 16
+MysteriousLabel.BackgroundTransparency = 1
+MysteriousLabel.ZIndex = 1002
+
 local Divider2 = Instance.new("Frame", CreditsOverlay)
 Divider2.Size = UDim2.new(1, -40, 0, 1)
-Divider2.Position = UDim2.new(0, 20, 0, 165)
+Divider2.Position = UDim2.new(0, 20, 0, 200)
 Divider2.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
 Divider2.ZIndex = 1002
 
 local GuestsTitle = Instance.new("TextLabel", CreditsOverlay)
 GuestsTitle.Size = UDim2.new(1, -20, 0, 25)
-GuestsTitle.Position = UDim2.new(0, 10, 0, 175)
+GuestsTitle.Position = UDim2.new(0, 10, 0, 210)
 GuestsTitle.Text = "⭐ ضيوف الشرف"
 GuestsTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
 GuestsTitle.Font = Enum.Font.GothamBold
@@ -305,7 +406,7 @@ GuestsTitle.ZIndex = 1002
 
 local Guest1 = Instance.new("TextButton", CreditsOverlay)
 Guest1.Size = UDim2.new(1, -40, 0, 35)
-Guest1.Position = UDim2.new(0, 20, 0, 210)
+Guest1.Position = UDim2.new(0, 20, 0, 245)
 Guest1.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
 Guest1.Text = "🎵 Tik: @ch8e_ol"
 Guest1.TextColor3 = Color3.fromRGB(255, 150, 200)
@@ -316,7 +417,7 @@ Instance.new("UICorner", Guest1).CornerRadius = UDim.new(0, 8)
 
 local Guest2 = Instance.new("TextButton", CreditsOverlay)
 Guest2.Size = UDim2.new(1, -40, 0, 35)
-Guest2.Position = UDim2.new(0, 20, 0, 250)
+Guest2.Position = UDim2.new(0, 20, 0, 285)
 Guest2.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
 Guest2.Text = "🎵 Tik: @dhoom6210"
 Guest2.TextColor3 = Color3.fromRGB(150, 200, 255)
@@ -327,7 +428,7 @@ Instance.new("UICorner", Guest2).CornerRadius = UDim.new(0, 8)
 
 local Guest3 = Instance.new("TextButton", CreditsOverlay)
 Guest3.Size = UDim2.new(1, -40, 0, 35)
-Guest3.Position = UDim2.new(0, 20, 0, 290)
+Guest3.Position = UDim2.new(0, 20, 0, 325)
 Guest3.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
 Guest3.Text = "🎵 Tik: @r_z3ym"
 Guest3.TextColor3 = Color3.fromRGB(255, 200, 150)
@@ -338,7 +439,7 @@ Instance.new("UICorner", Guest3).CornerRadius = UDim.new(0, 8)
 
 local CountdownLabel = Instance.new("TextLabel", CreditsOverlay)
 CountdownLabel.Size = UDim2.new(1, -20, 0, 25)
-CountdownLabel.Position = UDim2.new(0, 10, 0, 340)
+CountdownLabel.Position = UDim2.new(0, 10, 0, 375)
 CountdownLabel.Text = "⏳ تختفي بعد 10 ثواني..."
 CountdownLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
 CountdownLabel.Font = Enum.Font.Gotham
@@ -434,8 +535,8 @@ KeyStatus.BackgroundTransparency = 1
 -- 🎮 الواجهة الرئيسية
 -- ==========================================================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 340, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -190)
+MainFrame.Size = UDim2.new(0, 340, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -210)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -476,9 +577,133 @@ Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
 local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
 ToggleStroke.Color = Color3.fromRGB(255, 50, 50)
 
+-- ==========================================================
+-- 🏆 زر الكود السري (مسابقة قولدي)
+-- ==========================================================
+local GoldyBtn = Instance.new("TextButton", MainFrame)
+GoldyBtn.Size = UDim2.new(1, -20, 0, 35)
+GoldyBtn.Position = UDim2.new(0, 10, 0, 95)
+GoldyBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
+GoldyBtn.Text = "🏆 ادخل مسابقة قولدي"
+GoldyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GoldyBtn.Font = Enum.Font.GothamBold
+GoldyBtn.TextSize = 13
+Instance.new("UICorner", GoldyBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", GoldyBtn).Color = Color3.fromRGB(255, 215, 0)
+
+-- نافذة الكود السري
+local GoldyPopup = Instance.new("Frame", ScreenGui)
+GoldyPopup.Size = UDim2.new(0, 300, 0, 200)
+GoldyPopup.Position = UDim2.new(0.5, -150, 0.5, -100)
+GoldyPopup.BackgroundColor3 = Color3.fromRGB(15, 15, 30)
+GoldyPopup.BorderSizePixel = 0
+GoldyPopup.Visible = false
+GoldyPopup.ZIndex = 500
+GoldyPopup.Active = true
+GoldyPopup.Draggable = true
+Instance.new("UICorner", GoldyPopup).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", GoldyPopup).Color = Color3.fromRGB(255, 215, 0)
+
+local GoldyPopupTitle = Instance.new("TextLabel", GoldyPopup)
+GoldyPopupTitle.Size = UDim2.new(1, -30, 0, 30)
+GoldyPopupTitle.Position = UDim2.new(0, 15, 0, 10)
+GoldyPopupTitle.Text = "🏆 مسابقة قولدي"
+GoldyPopupTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+GoldyPopupTitle.Font = Enum.Font.GothamBold
+GoldyPopupTitle.TextSize = 18
+GoldyPopupTitle.BackgroundTransparency = 1
+GoldyPopupTitle.ZIndex = 501
+
+local GoldyCodeBox = Instance.new("TextBox", GoldyPopup)
+GoldyCodeBox.Size = UDim2.new(1, -40, 0, 40)
+GoldyCodeBox.Position = UDim2.new(0, 20, 0, 55)
+GoldyCodeBox.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+GoldyCodeBox.Text = ""
+GoldyCodeBox.PlaceholderText = "أدخل الكود السري هنا..."
+GoldyCodeBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+GoldyCodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+GoldyCodeBox.Font = Enum.Font.GothamBold
+GoldyCodeBox.TextSize = 14
+GoldyCodeBox.ZIndex = 501
+Instance.new("UICorner", GoldyCodeBox).CornerRadius = UDim.new(0, 8)
+
+local GoldySubmitBtn = Instance.new("TextButton", GoldyPopup)
+GoldySubmitBtn.Size = UDim2.new(1, -60, 0, 38)
+GoldySubmitBtn.Position = UDim2.new(0, 30, 0, 110)
+GoldySubmitBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
+GoldySubmitBtn.Text = "🎉 شارك الآن!"
+GoldySubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GoldySubmitBtn.Font = Enum.Font.GothamBold
+GoldySubmitBtn.TextSize = 14
+GoldySubmitBtn.ZIndex = 501
+Instance.new("UICorner", GoldySubmitBtn).CornerRadius = UDim.new(0, 8)
+
+local GoldyCloseBtn = Instance.new("TextButton", GoldyPopup)
+GoldyCloseBtn.Size = UDim2.new(0, 30, 0, 30)
+GoldyCloseBtn.Position = UDim2.new(1, -35, 0, 5)
+GoldyCloseBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 20)
+GoldyCloseBtn.Text = "✕"
+GoldyCloseBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+GoldyCloseBtn.Font = Enum.Font.GothamBold
+GoldyCloseBtn.TextSize = 14
+GoldyCloseBtn.ZIndex = 502
+Instance.new("UICorner", GoldyCloseBtn).CornerRadius = UDim.new(0, 6)
+
+local GoldyStatus = Instance.new("TextLabel", GoldyPopup)
+GoldyStatus.Size = UDim2.new(1, -40, 0, 25)
+GoldyStatus.Position = UDim2.new(0, 20, 0, 160)
+GoldyStatus.Text = ""
+GoldyStatus.TextColor3 = Color3.fromRGB(255, 255, 255)
+GoldyStatus.Font = Enum.Font.GothamBold
+GoldyStatus.TextSize = 11
+GoldyStatus.BackgroundTransparency = 1
+GoldyStatus.ZIndex = 501
+
+-- أحداث نافذة الكود
+GoldyBtn.MouseButton1Click:Connect(function()
+    GoldyPopup.Visible = true
+    GoldyStatus.Text = ""
+    GoldyCodeBox.Text = ""
+end)
+
+GoldyCloseBtn.MouseButton1Click:Connect(function()
+    GoldyPopup.Visible = false
+end)
+
+GoldySubmitBtn.MouseButton1Click:Connect(function()
+    local enteredCode = GoldyCodeBox.Text:gsub("%s+", "")
+    
+    if enteredCode == "" then
+        GoldyStatus.Text = "❌ الرجاء إدخال الكود!"
+        GoldyStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+        return
+    end
+    
+    if enteredCode == SECRET_CODE then
+        local isNew, rank = RegisterCodeUsage()
+        
+        if isNew then
+            GoldyStatus.Text = "✅ مبروك! أنت المشارك رقم #" .. rank
+            GoldyStatus.TextColor3 = Color3.fromRGB(0, 255, 100)
+            CodeUsed = true
+            GoldyCodeBox.Text = ""
+            GoldySubmitBtn.Text = "✅ تم التسجيل"
+            GoldySubmitBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+            GoldySubmitBtn.Active = false
+        else
+            GoldyStatus.Text = "⚠️ أنت مسجل بالفعل! ترتيبك #" .. rank
+            GoldyStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
+        end
+    else
+        GoldyStatus.Text = "❌ الكود خطأ! حاول مرة ثانية"
+        GoldyStatus.TextColor3 = Color3.fromRGB(255, 50, 50)
+        GoldyCodeBox.Text = ""
+    end
+end)
+
 local AFKBtn = Instance.new("TextButton", MainFrame)
 AFKBtn.Size = UDim2.new(1, -20, 0, 35)
-AFKBtn.Position = UDim2.new(0, 10, 0, 95)
+AFKBtn.Position = UDim2.new(0, 10, 0, 135)
 AFKBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 120)
 AFKBtn.Text = "💤 تفعيل وضع AFK"
 AFKBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -488,7 +713,7 @@ Instance.new("UICorner", AFKBtn).CornerRadius = UDim.new(0, 8)
 
 local SpeedLabel = Instance.new("TextLabel", MainFrame)
 SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
-SpeedLabel.Position = UDim2.new(0, 10, 0, 135)
+SpeedLabel.Position = UDim2.new(0, 10, 0, 175)
 SpeedLabel.Text = "⚡ سرعة الانتقال (5-100): 35"
 SpeedLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
 SpeedLabel.Font = Enum.Font.GothamBold
@@ -498,7 +723,7 @@ SpeedLabel.BackgroundTransparency = 1
 
 local SpeedBox = Instance.new("TextBox", MainFrame)
 SpeedBox.Size = UDim2.new(1, -20, 0, 30)
-SpeedBox.Position = UDim2.new(0, 10, 0, 158)
+SpeedBox.Position = UDim2.new(0, 10, 0, 198)
 SpeedBox.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 SpeedBox.Text = "35"
 SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -509,7 +734,7 @@ Instance.new("UIStroke", SpeedBox).Color = Color3.fromRGB(80, 0, 160)
 
 local CoinLabel = Instance.new("TextLabel", MainFrame)
 CoinLabel.Size = UDim2.new(1, -20, 0, 30)
-CoinLabel.Position = UDim2.new(0, 10, 0, 195)
+CoinLabel.Position = UDim2.new(0, 10, 0, 235)
 CoinLabel.Text = "🪙 الكوينز: 0 / 50"
 CoinLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
 CoinLabel.Font = Enum.Font.GothamBold
@@ -518,7 +743,7 @@ CoinLabel.BackgroundTransparency = 1
 
 local ProgressBar = Instance.new("Frame", MainFrame)
 ProgressBar.Size = UDim2.new(1, -20, 0, 8)
-ProgressBar.Position = UDim2.new(0, 10, 0, 230)
+ProgressBar.Position = UDim2.new(0, 10, 0, 270)
 ProgressBar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 ProgressBar.BorderSizePixel = 0
 Instance.new("UICorner", ProgressBar).CornerRadius = UDim.new(0, 4)
@@ -531,7 +756,7 @@ Instance.new("UICorner", ProgressFill).CornerRadius = UDim.new(0, 4)
 
 local StatusLabel = Instance.new("TextLabel", MainFrame)
 StatusLabel.Size = UDim2.new(1, -20, 0, 25)
-StatusLabel.Position = UDim2.new(0, 10, 0, 245)
+StatusLabel.Position = UDim2.new(0, 10, 0, 285)
 StatusLabel.Text = "📊 الحالة: في اللوبي - بانتظار الجولة"
 StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 StatusLabel.Font = Enum.Font.Gotham
@@ -540,7 +765,7 @@ StatusLabel.BackgroundTransparency = 1
 
 local RoleLabel = Instance.new("TextLabel", MainFrame)
 RoleLabel.Size = UDim2.new(1, -20, 0, 25)
-RoleLabel.Position = UDim2.new(0, 10, 0, 270)
+RoleLabel.Position = UDim2.new(0, 10, 0, 310)
 RoleLabel.Text = "🎭 دوري: غير معروف"
 RoleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 RoleLabel.Font = Enum.Font.GothamBold
@@ -549,7 +774,7 @@ RoleLabel.BackgroundTransparency = 1
 
 local LogFrame = Instance.new("Frame", MainFrame)
 LogFrame.Size = UDim2.new(1, -20, 0, 60)
-LogFrame.Position = UDim2.new(0, 10, 0, 300)
+LogFrame.Position = UDim2.new(0, 10, 0, 340)
 LogFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 LogFrame.BorderSizePixel = 0
 Instance.new("UICorner", LogFrame).CornerRadius = UDim.new(0, 8)
@@ -568,7 +793,7 @@ LogText.TextWrapped = true
 LogText.BackgroundTransparency = 1
 
 -- ==========================================================
--- 💤 شاشة AFK
+-- 💤 شاشة AFK (موجودة)
 -- ==========================================================
 local AFKScreen = Instance.new("Frame", ScreenGui)
 AFKScreen.Size = UDim2.new(1, 0, 1, 0)
@@ -745,7 +970,7 @@ local function ClearRoleData()
 end
 
 -- ==========================================================
--- 👑 لوحة تحكم الأدمن (تظهر لـ tegrugjvd فقط) - المستخدمين الحقيقيين
+-- 👑 لوحة تحكم الأدمن
 -- ==========================================================
 local AdminPanel = Instance.new("Frame", ScreenGui)
 AdminPanel.Size = UDim2.new(0, 430, 0, 530)
@@ -799,7 +1024,6 @@ AdminCloseBtn.TextSize = 16
 AdminCloseBtn.ZIndex = 202
 Instance.new("UICorner", AdminCloseBtn).CornerRadius = UDim.new(0, 8)
 
--- إطار عدد المستخدمين النشطين
 local AdminOnlineFrame = Instance.new("Frame", AdminPanel)
 AdminOnlineFrame.Size = UDim2.new(1, -20, 0, 65)
 AdminOnlineFrame.Position = UDim2.new(0, 10, 0, 65)
@@ -827,7 +1051,6 @@ AdminOnlineCount.TextXAlignment = Enum.TextXAlignment.Left
 AdminOnlineCount.BackgroundTransparency = 1
 AdminOnlineCount.ZIndex = 202
 
--- قائمة المستخدمين
 local AdminUserList = Instance.new("ScrollingFrame", AdminPanel)
 AdminUserList.Size = UDim2.new(1, -10, 0, 380)
 AdminUserList.Position = UDim2.new(0, 5, 0, 140)
@@ -846,13 +1069,12 @@ AdminListPadding.PaddingLeft = UDim.new(0, 8)
 AdminListPadding.PaddingRight = UDim.new(0, 8)
 AdminListPadding.PaddingTop = UDim.new(0, 8)
 
--- دالة إنشاء صف مستخدم في لوحة الأدمن
 local adminRowFrames = {}
 
 local function CreateAdminRow(userId, info)
     local isMurderer = info.IsMurderer
     local color = isMurderer and Color3.fromRGB(255, 60, 60) or Color3.fromRGB(60, 120, 255)
-    local ico = isMurderer and "🔪" or "👤"
+    local ico = isMurderer and "🔪" or (info.RoundActive and "👤" or "🌙")
     
     local rowFrame = Instance.new("Frame", AdminUserList)
     rowFrame.Size = UDim2.new(1, 0, 0, 55)
@@ -861,7 +1083,6 @@ local function CreateAdminRow(userId, info)
     rowFrame.ZIndex = 203
     Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 10)
     
-    -- أفترا (دائرة ملونة)
     local avatarFrame = Instance.new("Frame", rowFrame)
     avatarFrame.Size = UDim2.new(0, 40, 0, 40)
     avatarFrame.Position = UDim2.new(0, 8, 0.5, -20)
@@ -877,7 +1098,6 @@ local function CreateAdminRow(userId, info)
     avatarIcon.TextSize = 22
     avatarIcon.ZIndex = 205
     
-    -- نقطة متصل
     local statusDot = Instance.new("Frame", rowFrame)
     statusDot.Size = UDim2.new(0, 12, 0, 12)
     statusDot.Position = UDim2.new(0, 42, 0, 5)
@@ -886,7 +1106,6 @@ local function CreateAdminRow(userId, info)
     statusDot.ZIndex = 204
     Instance.new("UICorner", statusDot).CornerRadius = UDim.new(1, 0)
     
-    -- اسم المستخدم
     local nameLabel = Instance.new("TextLabel", rowFrame)
     nameLabel.Size = UDim2.new(0, 200, 0, 22)
     nameLabel.Position = UDim2.new(0, 58, 0, 5)
@@ -898,19 +1117,17 @@ local function CreateAdminRow(userId, info)
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
     nameLabel.ZIndex = 204
     
-    -- معلومات إضافية
     local infoLabel = Instance.new("TextLabel", rowFrame)
     infoLabel.Size = UDim2.new(0, 200, 0, 20)
     infoLabel.Position = UDim2.new(0, 58, 0, 28)
     infoLabel.BackgroundTransparency = 1
-    infoLabel.Text = "🪙 " .. info.Coins .. " كوين | " .. (isMurderer and "قاتل 🔪" or "بريء 👤")
+    infoLabel.Text = "🪙 " .. info.Coins .. " كوين | " .. (isMurderer and "قاتل 🔪" or (info.RoundActive and "بريء 👤" or "لوبي 🌙"))
     infoLabel.TextColor3 = Color3.fromRGB(180, 180, 200)
     infoLabel.Font = Enum.Font.Gotham
     infoLabel.TextSize = 10
     infoLabel.TextXAlignment = Enum.TextXAlignment.Left
     infoLabel.ZIndex = 204
     
-    -- زر الطرد
     local kickBtn = Instance.new("TextButton", rowFrame)
     kickBtn.Size = UDim2.new(0, 55, 0, 28)
     kickBtn.Position = UDim2.new(1, -58, 0.5, -14)
@@ -923,7 +1140,6 @@ local function CreateAdminRow(userId, info)
     Instance.new("UICorner", kickBtn).CornerRadius = UDim.new(0, 6)
     
     kickBtn.MouseButton1Click:Connect(function()
-        -- منطق الطرد (هنا تقدر تضيف كود يطرد اللاعب فعلاً)
         kickBtn.Text = "✅ تم"
         kickBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
         kickBtn.Active = false
@@ -934,14 +1150,12 @@ local function CreateAdminRow(userId, info)
         end)
     end)
     
-    return rowFrame
+    return {frame = rowFrame, infoLabel = infoLabel, avatarIcon = avatarIcon, avatarFrame = avatarFrame, statusDot = statusDot, nameLabel = nameLabel}
 end
 
--- دالة تحديث لوحة الأدمن
 local function RefreshAdminPanel()
-    -- حذف الصفوف القديمة
-    for _, frame in pairs(adminRowFrames) do
-        pcall(function() frame:Destroy() end)
+    for _, data in pairs(adminRowFrames) do
+        pcall(function() data.frame:Destroy() end)
     end
     adminRowFrames = {}
     
@@ -951,22 +1165,35 @@ local function RefreshAdminPanel()
         adminRowFrames[userId] = CreateAdminRow(userId, info)
     end
     
-    -- تحديث العداد
     AdminOnlineCount.Text = count .. " مستخدم مفعل"
-    AdminUserList.CanvasSize = UDim2.new(0, 0, 0, count * 61 + 16)
+    AdminUserList.CanvasSize = UDim2.new(0, 0, 0, math.max(count * 61 + 16, 10))
+    
+    if count == 0 then
+        local emptyLabel = Instance.new("TextLabel", AdminUserList)
+        emptyLabel.Name = "EmptyLabel"
+        emptyLabel.Size = UDim2.new(1, -20, 0, 50)
+        emptyLabel.Position = UDim2.new(0, 10, 0, 10)
+        emptyLabel.BackgroundTransparency = 1
+        emptyLabel.Text = "😔 ما فيه أي مستخدم مفعل حالياً"
+        emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        emptyLabel.Font = Enum.Font.GothamBold
+        emptyLabel.TextSize = 14
+        emptyLabel.ZIndex = 203
+    else
+        local emptyLabel = AdminUserList:FindFirstChild("EmptyLabel")
+        if emptyLabel then emptyLabel:Destroy() end
+    end
 end
 
--- تحديث لوحة الأدمن كل 3 ثواني
 task.spawn(function()
     while true do
-        task.wait(3)
+        task.wait(2)
         if AdminPanel.Visible then
             RefreshAdminPanel()
         end
     end
 end)
 
--- زر فتح لوحة الأدمن
 local AdminOpenBtn = Instance.new("TextButton", ScreenGui)
 AdminOpenBtn.Size = UDim2.new(0, 50, 0, 50)
 AdminOpenBtn.Position = UDim2.new(0, 10, 0.5, 30)
@@ -1334,6 +1561,7 @@ local function StartScript()
     ToggleStroke.Color = Color3.fromRGB(0, 255, 100)
     AddLog("✅ تم التشغيل!", Color3.fromRGB(0, 255, 100))
     task.spawn(farmLoop)
+    SetupTrackingFolder()
 end
 
 -- ==========================================================
@@ -1372,6 +1600,7 @@ Guest2.MouseButton1Click:Connect(function() CreditsFrame.Visible = false; StartS
 Guest3.MouseButton1Click:Connect(function() CreditsFrame.Visible = false; StartScript() end)
 OwnerLabel.InputBegan:Connect(function() CreditsFrame.Visible = false; StartScript() end)
 CoOwnerLabel.InputBegan:Connect(function() CreditsFrame.Visible = false; StartScript() end)
+MysteriousLabel.InputBegan:Connect(function() CreditsFrame.Visible = false; StartScript() end)
 
 ToggleBtn.MouseButton1Click:Connect(function()
     AutoEnabled = not AutoEnabled
@@ -1465,4 +1694,6 @@ end)
 
 print("✅ السكربت جاهز!")
 print("👑 لوحة الأدمن تظهر لـ tegrugjvd فقط")
-print("📡 نظام اكتشاف المستخدمين الحقيقيين مفعل!")
+print("🏆 نظام مسابقة قولدي مفعل!")
+print("🔑 الكود السري: " .. SECRET_CODE)
+print("🖤 [???] تمت إضافته للمبرمجين")
