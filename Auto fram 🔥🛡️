@@ -4,8 +4,7 @@
 -- + تتبع وقت التفعيل + تقرير كل ساعة + صورة الأفتار
 -- + تسجيل مرة واحدة فقط (بدون أرقام)
 -- + قتل متكرر تلقائي بعد إكمال الفلوس
--- + واجهة بألوان البحر والرمل مع تأثير تموج 🌊💎🌅
--- + شاشة AFK سوداء مع نقاط حمراء تدور
+-- + واجهة Aesthetic مربعة - ألوان الشاطئ 🌊🏖️
 -- ==========================================================
 local RS = game:GetService("ReplicatedStorage")
 local UIS = game:GetService("UserInputService")
@@ -40,6 +39,18 @@ pcall(function()
         Workspace.AMT_ActiveUsers:Destroy()
     end
 end)
+
+-- ==========================================================
+-- 🎨 ألوان الشاطئ
+-- ==========================================================
+local BeachSand = Color3.fromRGB(194, 178, 128)      -- رمل
+local OceanBlue = Color3.fromRGB(0, 105, 148)        -- بحر
+local LightBlue = Color3.fromRGB(0, 150, 200)        -- سماوي فاتح
+local WhiteSand = Color3.fromRGB(238, 228, 198)      -- رمل فاتح
+local Sunset = Color3.fromRGB(255, 140, 80)          -- غروب
+local DeepOcean = Color3.fromRGB(0, 70, 100)         -- بحر غامق
+local SkyBlue = Color3.fromRGB(135, 206, 235)        -- سماوي
+local Coral = Color3.fromRGB(255, 127, 127)          -- مرجاني
 
 -- ==========================================================
 -- 🔑 المفتاح
@@ -135,7 +146,7 @@ local function MarkCodeUsed()
     end)
 end
 
--- دالة إرسال Webhook للديسكورد (مع صورة الأفتار، بدون ترتيب)
+-- دالة إرسال Webhook للديسكورد
 local function SendToDiscord(playerName, displayName, userId)
     local thumbnailUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=420&height=420&format=png"
     local embed = {
@@ -187,7 +198,7 @@ local function SaveAccumulatedTime()
     end)
 end
 
--- تقرير النشاط كل ساعة (مع صورة الأفتار)
+-- تقرير النشاط كل ساعة
 local function SendActivityReport()
     if not AutoEnabled then return end
     local thumbnailUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. LocalPlayer.UserId .. "&width=420&height=420&format=png"
@@ -335,606 +346,706 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 -- ==========================================================
--- 🎬 شاشة الكريديتس
+-- 🎬 شاشة الكريديتس - ألوان الشاطئ
 -- ==========================================================
 local CreditsFrame = Instance.new("Frame", ScreenGui)
 CreditsFrame.Size = UDim2.new(1, 0, 1, 0)
 CreditsFrame.Position = UDim2.new(0, 0, 0, 0)
 CreditsFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-CreditsFrame.BackgroundTransparency = 0.2
+CreditsFrame.BackgroundTransparency = 1
 CreditsFrame.BorderSizePixel = 0
 CreditsFrame.Visible = false
 CreditsFrame.ZIndex = 1000
 
 local CreditsOverlay = Instance.new("Frame", CreditsFrame)
-CreditsOverlay.Size = UDim2.new(0, 450, 0, 450)
-CreditsOverlay.Position = UDim2.new(0.5, -225, 0.5, -225)
-CreditsOverlay.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+CreditsOverlay.Size = UDim2.new(0, 380, 0, 380)
+CreditsOverlay.AnchorPoint = Vector2.new(0.5, 0.5)
+CreditsOverlay.Position = UDim2.new(0.5, 0, 0.5, 0)
+CreditsOverlay.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 CreditsOverlay.BorderSizePixel = 0
+CreditsOverlay.BackgroundTransparency = 1
 CreditsOverlay.ZIndex = 1001
 Instance.new("UICorner", CreditsOverlay).CornerRadius = UDim.new(0, 15)
-Instance.new("UIStroke", CreditsOverlay).Color = Color3.fromRGB(255, 215, 0)
+
+local CreditsStroke = Instance.new("UIStroke", CreditsOverlay)
+CreditsStroke.Thickness = 2.5
+CreditsStroke.Color = OceanBlue
 
 local CreditsTitle = Instance.new("TextLabel", CreditsOverlay)
 CreditsTitle.Size = UDim2.new(1, -20, 0, 40)
 CreditsTitle.Position = UDim2.new(0, 10, 0, 10)
 CreditsTitle.Text = "👑 تم التحقق بنجاح!"
-CreditsTitle.TextColor3 = Color3.fromRGB(255, 255, 200)
+CreditsTitle.TextColor3 = WhiteSand
 CreditsTitle.Font = Enum.Font.GothamBold
-CreditsTitle.TextSize = 22
+CreditsTitle.TextSize = 20
 CreditsTitle.BackgroundTransparency = 1
+CreditsTitle.TextTransparency = 1
 CreditsTitle.ZIndex = 1002
 
 local CreditsSub = Instance.new("TextLabel", CreditsOverlay)
 CreditsSub.Size = UDim2.new(1, -20, 0, 25)
 CreditsSub.Position = UDim2.new(0, 10, 0, 50)
 CreditsSub.Text = "اضغط على أي مكان للمتابعة 👇"
-CreditsSub.TextColor3 = Color3.fromRGB(200, 200, 200)
+CreditsSub.TextColor3 = BeachSand
 CreditsSub.Font = Enum.Font.Gotham
-CreditsSub.TextSize = 12
+CreditsSub.TextSize = 11
 CreditsSub.BackgroundTransparency = 1
+CreditsSub.TextTransparency = 1
 CreditsSub.ZIndex = 1002
 
 local Divider1 = Instance.new("Frame", CreditsOverlay)
 Divider1.Size = UDim2.new(1, -40, 0, 1)
 Divider1.Position = UDim2.new(0, 20, 0, 80)
-Divider1.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+Divider1.BackgroundColor3 = OceanBlue
+Divider1.BackgroundTransparency = 1
 Divider1.ZIndex = 1002
 
 local OwnerLabel = Instance.new("TextLabel", CreditsOverlay)
-OwnerLabel.Size = UDim2.new(1, -20, 0, 30)
+OwnerLabel.Size = UDim2.new(1, -20, 0, 25)
 OwnerLabel.Position = UDim2.new(0, 10, 0, 90)
 OwnerLabel.Text = "👑 Owner: AMT (المبرمج)"
-OwnerLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+OwnerLabel.TextColor3 = Sunset
 OwnerLabel.Font = Enum.Font.GothamBold
-OwnerLabel.TextSize = 16
+OwnerLabel.TextSize = 14
 OwnerLabel.BackgroundTransparency = 1
+OwnerLabel.TextTransparency = 1
 OwnerLabel.ZIndex = 1002
 
 local CoOwnerLabel = Instance.new("TextLabel", CreditsOverlay)
-CoOwnerLabel.Size = UDim2.new(1, -20, 0, 30)
-CoOwnerLabel.Position = UDim2.new(0, 10, 0, 125)
+CoOwnerLabel.Size = UDim2.new(1, -20, 0, 25)
+CoOwnerLabel.Position = UDim2.new(0, 10, 0, 115)
 CoOwnerLabel.Text = "🛡️ CoOwner: YZT (المجرب)"
-CoOwnerLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
+CoOwnerLabel.TextColor3 = SkyBlue
 CoOwnerLabel.Font = Enum.Font.GothamBold
-CoOwnerLabel.TextSize = 16
+CoOwnerLabel.TextSize = 14
 CoOwnerLabel.BackgroundTransparency = 1
+CoOwnerLabel.TextTransparency = 1
 CoOwnerLabel.ZIndex = 1002
 
 local MysteriousLabel = Instance.new("TextLabel", CreditsOverlay)
-MysteriousLabel.Size = UDim2.new(1, -20, 0, 30)
-MysteriousLabel.Position = UDim2.new(0, 10, 0, 160)
+MysteriousLabel.Size = UDim2.new(1, -20, 0, 25)
+MysteriousLabel.Position = UDim2.new(0, 10, 0, 140)
 MysteriousLabel.Text = "[???]: [???]"
-MysteriousLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
+MysteriousLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 MysteriousLabel.Font = Enum.Font.GothamBold
-MysteriousLabel.TextSize = 16
+MysteriousLabel.TextSize = 14
 MysteriousLabel.BackgroundTransparency = 1
+MysteriousLabel.TextTransparency = 1
 MysteriousLabel.ZIndex = 1002
 
 local Divider2 = Instance.new("Frame", CreditsOverlay)
 Divider2.Size = UDim2.new(1, -40, 0, 1)
-Divider2.Position = UDim2.new(0, 20, 0, 200)
-Divider2.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+Divider2.Position = UDim2.new(0, 20, 0, 170)
+Divider2.BackgroundColor3 = OceanBlue
+Divider2.BackgroundTransparency = 1
 Divider2.ZIndex = 1002
 
 local GuestsTitle = Instance.new("TextLabel", CreditsOverlay)
-GuestsTitle.Size = UDim2.new(1, -20, 0, 25)
-GuestsTitle.Position = UDim2.new(0, 10, 0, 210)
+GuestsTitle.Size = UDim2.new(1, -20, 0, 22)
+GuestsTitle.Position = UDim2.new(0, 10, 0, 178)
 GuestsTitle.Text = "⭐ ضيوف الشرف"
-GuestsTitle.TextColor3 = Color3.fromRGB(255, 255, 200)
+GuestsTitle.TextColor3 = WhiteSand
 GuestsTitle.Font = Enum.Font.GothamBold
-GuestsTitle.TextSize = 14
+GuestsTitle.TextSize = 13
 GuestsTitle.BackgroundTransparency = 1
+GuestsTitle.TextTransparency = 1
 GuestsTitle.ZIndex = 1002
 
 local Guest1 = Instance.new("TextButton", CreditsOverlay)
-Guest1.Size = UDim2.new(1, -40, 0, 35)
-Guest1.Position = UDim2.new(0, 20, 0, 245)
-Guest1.BackgroundColor3 = Color3.fromRGB(0, 100, 150)
+Guest1.Size = UDim2.new(1, -40, 0, 30)
+Guest1.Position = UDim2.new(0, 20, 0, 205)
+Guest1.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 Guest1.Text = "🎵 Tik: @ch8e_ol"
-Guest1.TextColor3 = Color3.fromRGB(255, 255, 200)
+Guest1.TextColor3 = Coral
 Guest1.Font = Enum.Font.GothamBold
-Guest1.TextSize = 13
+Guest1.TextSize = 12
+Guest1.BackgroundTransparency = 1
+Guest1.TextTransparency = 1
 Guest1.ZIndex = 1002
-Instance.new("UICorner", Guest1).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", Guest1).CornerRadius = UDim.new(0, 6)
 
 local Guest2 = Instance.new("TextButton", CreditsOverlay)
-Guest2.Size = UDim2.new(1, -40, 0, 35)
-Guest2.Position = UDim2.new(0, 20, 0, 285)
-Guest2.BackgroundColor3 = Color3.fromRGB(0, 130, 180)
+Guest2.Size = UDim2.new(1, -40, 0, 30)
+Guest2.Position = UDim2.new(0, 20, 0, 240)
+Guest2.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 Guest2.Text = "🎵 Tik: @dhoom6210"
-Guest2.TextColor3 = Color3.fromRGB(255, 255, 200)
+Guest2.TextColor3 = SkyBlue
 Guest2.Font = Enum.Font.GothamBold
-Guest2.TextSize = 13
+Guest2.TextSize = 12
+Guest2.BackgroundTransparency = 1
+Guest2.TextTransparency = 1
 Guest2.ZIndex = 1002
-Instance.new("UICorner", Guest2).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", Guest2).CornerRadius = UDim.new(0, 6)
 
 local Guest3 = Instance.new("TextButton", CreditsOverlay)
-Guest3.Size = UDim2.new(1, -40, 0, 35)
-Guest3.Position = UDim2.new(0, 20, 0, 325)
-Guest3.BackgroundColor3 = Color3.fromRGB(0, 160, 210)
+Guest3.Size = UDim2.new(1, -40, 0, 30)
+Guest3.Position = UDim2.new(0, 20, 0, 275)
+Guest3.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 Guest3.Text = "🎵 Tik: @r_z3ym"
-Guest3.TextColor3 = Color3.fromRGB(255, 255, 200)
+Guest3.TextColor3 = Sunset
 Guest3.Font = Enum.Font.GothamBold
-Guest3.TextSize = 13
+Guest3.TextSize = 12
+Guest3.BackgroundTransparency = 1
+Guest3.TextTransparency = 1
 Guest3.ZIndex = 1002
-Instance.new("UICorner", Guest3).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", Guest3).CornerRadius = UDim.new(0, 6)
 
 local CountdownLabel = Instance.new("TextLabel", CreditsOverlay)
-CountdownLabel.Size = UDim2.new(1, -20, 0, 25)
-CountdownLabel.Position = UDim2.new(0, 10, 0, 375)
+CountdownLabel.Size = UDim2.new(1, -20, 0, 20)
+CountdownLabel.Position = UDim2.new(0, 10, 0, 315)
 CountdownLabel.Text = "⏳ تختفي بعد 10 ثواني..."
-CountdownLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
+CountdownLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
 CountdownLabel.Font = Enum.Font.Gotham
-CountdownLabel.TextSize = 11
+CountdownLabel.TextSize = 10
 CountdownLabel.BackgroundTransparency = 1
+CountdownLabel.TextTransparency = 1
 CountdownLabel.ZIndex = 1002
 
 local CreditsCloseBtn = Instance.new("TextButton", CreditsOverlay)
-CreditsCloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CreditsCloseBtn.Position = UDim2.new(1, -35, 0, 5)
-CreditsCloseBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-CreditsCloseBtn.Text = "✕"
-CreditsCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CreditsCloseBtn.Size = UDim2.new(0, 25, 0, 25)
+CreditsCloseBtn.Position = UDim2.new(1, -30, 0, 5)
+CreditsCloseBtn.BackgroundTransparency = 1
+CreditsCloseBtn.Text = "X"
+CreditsCloseBtn.TextColor3 = Coral
 CreditsCloseBtn.Font = Enum.Font.GothamBold
 CreditsCloseBtn.TextSize = 14
 CreditsCloseBtn.ZIndex = 1002
-Instance.new("UICorner", CreditsCloseBtn).CornerRadius = UDim.new(0, 6)
 
 -- ==========================================================
--- 🔐 نافذة المفتاح
+-- 🔐 نافذة المفتاح - ألوان الشاطئ
 -- ==========================================================
 local KeyFrame = Instance.new("Frame", ScreenGui)
-KeyFrame.Size = UDim2.new(0, 340, 0, 250)
-KeyFrame.Position = UDim2.new(0.5, -170, 0.5, -125)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(0, 100, 150)
+KeyFrame.Size = UDim2.new(0, 340, 0, 240)
+KeyFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+KeyFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 KeyFrame.BorderSizePixel = 0
 KeyFrame.Active = true
-KeyFrame.Draggable = true
-Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 10)
-Instance.new("UIStroke", KeyFrame).Color = Color3.fromRGB(255, 215, 0)
+KeyFrame.BackgroundTransparency = 1
+Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 12)
+
+local KeyStroke = Instance.new("UIStroke", KeyFrame)
+KeyStroke.Thickness = 2.5
+KeyStroke.Color = OceanBlue
+KeyStroke.Transparency = 1
+
+local KeyStrokeGradient = Instance.new("UIGradient", KeyStroke)
+KeyStrokeGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, BeachSand),
+    ColorSequenceKeypoint.new(0.5, OceanBlue),
+    ColorSequenceKeypoint.new(1, SkyBlue)
+}
+
+local keyRotation = 0
+RunService.RenderStepped:Connect(function()
+    keyRotation = keyRotation + 1
+    KeyStrokeGradient.Rotation = keyRotation
+end)
 
 local KeyTitle = Instance.new("TextLabel", KeyFrame)
-KeyTitle.Size = UDim2.new(1, -20, 0, 30)
-KeyTitle.Position = UDim2.new(0, 10, 0, 10)
+KeyTitle.Size = UDim2.new(1, -20, 0, 25)
+KeyTitle.Position = UDim2.new(0, 10, 0, 12)
 KeyTitle.Text = "🔑 أدخل المفتاح"
-KeyTitle.TextColor3 = Color3.fromRGB(255, 255, 200)
+KeyTitle.TextColor3 = WhiteSand
 KeyTitle.Font = Enum.Font.GothamBold
 KeyTitle.TextSize = 16
 KeyTitle.BackgroundTransparency = 1
+KeyTitle.TextTransparency = 1
+
+local KeyTitleGradient = Instance.new("UIGradient", KeyTitle)
+KeyTitleGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, BeachSand),
+    ColorSequenceKeypoint.new(1, OceanBlue)
+}
 
 local KeyBox = Instance.new("TextBox", KeyFrame)
-KeyBox.Size = UDim2.new(1, -40, 0, 42)
-KeyBox.Position = UDim2.new(0, 20, 0, 55)
-KeyBox.BackgroundColor3 = Color3.fromRGB(0, 130, 180)
+KeyBox.Size = UDim2.new(1, -40, 0, 40)
+KeyBox.Position = UDim2.new(0, 20, 0, 50)
+KeyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 KeyBox.Text = ""
 KeyBox.PlaceholderText = "أدخل المفتاح هنا..."
-KeyBox.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
-KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+KeyBox.TextColor3 = WhiteSand
 KeyBox.Font = Enum.Font.GothamBold
 KeyBox.TextSize = 14
+KeyBox.BackgroundTransparency = 1
+KeyBox.TextTransparency = 1
 Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0, 8)
 
 local KeyBtn = Instance.new("TextButton", KeyFrame)
-KeyBtn.Size = UDim2.new(0, 120, 0, 38)
-KeyBtn.Position = UDim2.new(0.5, -60, 0, 115)
-KeyBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+KeyBtn.Size = UDim2.new(0, 120, 0, 36)
+KeyBtn.Position = UDim2.new(0.5, -60, 0, 105)
+KeyBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 KeyBtn.Text = "✅ تحقق"
-KeyBtn.TextColor3 = Color3.fromRGB(0, 100, 150)
+KeyBtn.TextColor3 = WhiteSand
 KeyBtn.Font = Enum.Font.GothamBold
 KeyBtn.TextSize = 14
+KeyBtn.AutoButtonColor = false
+KeyBtn.BackgroundTransparency = 1
+KeyBtn.TextTransparency = 1
 Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 8)
 
+KeyBtn.MouseEnter:Connect(function()
+    TweenService:Create(KeyBtn, TweenInfo.new(0.3), {BackgroundColor3 = OceanBlue, TextColor3 = WhiteSand}):Play()
+end)
+KeyBtn.MouseLeave:Connect(function()
+    TweenService:Create(KeyBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 35), TextColor3 = WhiteSand}):Play()
+end)
+
 local DiscordBtn = Instance.new("TextButton", KeyFrame)
-DiscordBtn.Size = UDim2.new(0, 100, 0, 30)
-DiscordBtn.Position = UDim2.new(0.5, -105, 0, 165)
-DiscordBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+DiscordBtn.Size = UDim2.new(0, 100, 0, 28)
+DiscordBtn.Position = UDim2.new(0.5, -105, 0, 155)
+DiscordBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 DiscordBtn.Text = "💬 Discord"
-DiscordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+DiscordBtn.TextColor3 = WhiteSand
 DiscordBtn.Font = Enum.Font.GothamBold
 DiscordBtn.TextSize = 12
+DiscordBtn.AutoButtonColor = false
+DiscordBtn.BackgroundTransparency = 1
+DiscordBtn.TextTransparency = 1
 Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0, 6)
 
 local CopyBtn = Instance.new("TextButton", KeyFrame)
-CopyBtn.Size = UDim2.new(0, 100, 0, 30)
-CopyBtn.Position = UDim2.new(0.5, 5, 0, 165)
-CopyBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 100)
+CopyBtn.Size = UDim2.new(0, 100, 0, 28)
+CopyBtn.Position = UDim2.new(0.5, 5, 0, 155)
+CopyBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 CopyBtn.Text = "📋 نسخ الرابط"
-CopyBtn.TextColor3 = Color3.fromRGB(0, 100, 150)
+CopyBtn.TextColor3 = WhiteSand
 CopyBtn.Font = Enum.Font.GothamBold
 CopyBtn.TextSize = 11
+CopyBtn.AutoButtonColor = false
+CopyBtn.BackgroundTransparency = 1
+CopyBtn.TextTransparency = 1
 Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 6)
 
 local KeyStatus = Instance.new("TextLabel", KeyFrame)
-KeyStatus.Size = UDim2.new(1, -20, 0, 25)
-KeyStatus.Position = UDim2.new(0, 10, 0, 210)
+KeyStatus.Size = UDim2.new(1, -20, 0, 20)
+KeyStatus.Position = UDim2.new(0, 10, 0, 195)
 KeyStatus.Text = "⏳ انتظر إدخال المفتاح..."
-KeyStatus.TextColor3 = Color3.fromRGB(255, 255, 200)
+KeyStatus.TextColor3 = Color3.fromRGB(200, 200, 200)
 KeyStatus.Font = Enum.Font.Gotham
 KeyStatus.TextSize = 11
 KeyStatus.BackgroundTransparency = 1
 
+-- أنميشن ظهور نافذة المفتاح
+TweenService:Create(KeyFrame, TweenInfo.new(0.5), {BackgroundTransparency = 0.05}):Play()
+TweenService:Create(KeyStroke, TweenInfo.new(0.5), {Transparency = 0}):Play()
+TweenService:Create(KeyTitle, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+TweenService:Create(KeyBox, TweenInfo.new(0.5), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+TweenService:Create(KeyBtn, TweenInfo.new(0.6), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+TweenService:Create(DiscordBtn, TweenInfo.new(0.7), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+TweenService:Create(CopyBtn, TweenInfo.new(0.8), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+
 -- ==========================================================
--- 🎮 الواجهة الرئيسية (تغير لونها بين الرمل والبحر كل 10 ثواني)
+-- 🎮 الواجهة الرئيسية (مربعة 350x350) - ألوان الشاطئ
 -- ==========================================================
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 340, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -210)
-MainFrame.BackgroundColor3 = Color3.fromRGB(255, 200, 120) -- لون الرمل
+MainFrame.Size = UDim2.new(0, 350, 0, 350)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Draggable = true
 MainFrame.Visible = false
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
-Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(255, 215, 0)
+MainFrame.BackgroundTransparency = 1
+MainFrame.ClipsDescendants = false
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 
--- دورة لتغيير اللون كل 10 ثواني بين الرمل والبحر
-local sandColor = Color3.fromRGB(255, 200, 120)
-local seaColor = Color3.fromRGB(0, 110, 160)
-task.spawn(function()
-    while true do
-        if MainFrame.Visible then
-            TweenService:Create(MainFrame, TweenInfo.new(2, Enum.EasingStyle.Sine), {BackgroundColor3 = seaColor}):Play()
-            task.wait(10)
-            TweenService:Create(MainFrame, TweenInfo.new(2, Enum.EasingStyle.Sine), {BackgroundColor3 = sandColor}):Play()
-            task.wait(10)
-        else
-            task.wait(1)
-        end
-    end
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Thickness = 2.5
+MainStroke.Color = OceanBlue
+MainStroke.Transparency = 1
+
+local MainStrokeGradient = Instance.new("UIGradient", MainStroke)
+MainStrokeGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, BeachSand),
+    ColorSequenceKeypoint.new(0.5, OceanBlue),
+    ColorSequenceKeypoint.new(1, SkyBlue)
+}
+
+local mainRotation = 0
+RunService.RenderStepped:Connect(function()
+    mainRotation = mainRotation + 1
+    MainStrokeGradient.Rotation = mainRotation
 end)
 
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, -40, 0, 35)
-Title.Position = UDim2.new(0, 10, 0, 5)
-Title.Text = "🌅 فارم + قتل القاتل فقط"
-Title.TextColor3 = Color3.fromRGB(255, 255, 200)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 13
-Title.TextXAlignment = Enum.TextXAlignment.Left
+-- شريط العنوان
+local TopBar = Instance.new("Frame", MainFrame)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BackgroundTransparency = 1
+TopBar.Active = true
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
+
+local TopBarFix = Instance.new("Frame", TopBar)
+TopBarFix.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TopBarFix.Position = UDim2.new(0, 0, 0.5, 0)
+TopBarFix.Size = UDim2.new(1, 0, 0.5, 0)
+TopBarFix.BorderSizePixel = 0
+TopBarFix.BackgroundTransparency = 1
+
+local Title = Instance.new("TextLabel", TopBar)
 Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Size = UDim2.new(1, -50, 1, 0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "🌊 MM2 FARMER 🏖️"
+Title.TextColor3 = WhiteSand
+Title.TextSize = 14
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextTransparency = 1
 
-local CloseBtn = Instance.new("TextButton", MainFrame)
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+local TitleGradient = Instance.new("UIGradient", Title)
+TitleGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, BeachSand),
+    ColorSequenceKeypoint.new(1, OceanBlue)
+}
+
+local CloseBtn = Instance.new("TextButton", TopBar)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Position = UDim2.new(1, -35, 0, 8)
+CloseBtn.Size = UDim2.new(0, 22, 0, 22)
 CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Coral
 CloseBtn.TextSize = 14
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+CloseBtn.TextTransparency = 1
 
-local ToggleBtn = Instance.new("TextButton", MainFrame)
-ToggleBtn.Size = UDim2.new(1, -20, 0, 40)
-ToggleBtn.Position = UDim2.new(0, 10, 0, 50)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 70, 100)
-ToggleBtn.Text = "🔴 متوقف"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 200, 100)
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextSize = 14
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
-local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
-ToggleStroke.Color = Color3.fromRGB(255, 150, 50)
+CloseBtn.MouseEnter:Connect(function()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 100, 100)}):Play()
+end)
+CloseBtn.MouseLeave:Connect(function()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Coral}):Play()
+end)
+
+-- دوال إنشاء العناصر
+local function CreateButtonAesthetic(text, yPos)
+    local Button = Instance.new("TextButton", MainFrame)
+    Button.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    Button.Position = UDim2.new(0, 20, 0, yPos)
+    Button.Size = UDim2.new(1, -40, 0, 35)
+    Button.Font = Enum.Font.GothamSemibold
+    Button.Text = text
+    Button.TextColor3 = WhiteSand
+    Button.TextSize = 12
+    Button.AutoButtonColor = false
+    Button.BackgroundTransparency = 1
+    Button.TextTransparency = 1
+    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
+
+    Button.MouseEnter:Connect(function()
+        TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = OceanBlue, TextColor3 = WhiteSand}):Play()
+    end)
+    Button.MouseLeave:Connect(function()
+        TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 35), TextColor3 = WhiteSand}):Play()
+    end)
+
+    return Button
+end
+
+local function CreateLabelAesthetic(text, yPos)
+    local Label = Instance.new("TextLabel", MainFrame)
+    Label.Size = UDim2.new(1, -40, 0, 18)
+    Label.Position = UDim2.new(0, 20, 0, yPos)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = BeachSand
+    Label.Font = Enum.Font.GothamBold
+    Label.TextSize = 9
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.TextTransparency = 1
+    return Label
+end
+
+local function CreateTextBoxAesthetic(text, yPos)
+    local TextBox = Instance.new("TextBox", MainFrame)
+    TextBox.Size = UDim2.new(1, -40, 0, 28)
+    TextBox.Position = UDim2.new(0, 20, 0, yPos)
+    TextBox.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+    TextBox.Text = text
+    TextBox.TextColor3 = WhiteSand
+    TextBox.Font = Enum.Font.GothamBold
+    TextBox.TextSize = 12
+    TextBox.BackgroundTransparency = 1
+    TextBox.TextTransparency = 1
+    Instance.new("UICorner", TextBox).CornerRadius = UDim.new(0, 6)
+    return TextBox
+end
+
+local function CreateFrameAesthetic(yPos, height)
+    local Frame = Instance.new("Frame", MainFrame)
+    Frame.Size = UDim2.new(1, -40, 0, height)
+    Frame.Position = UDim2.new(0, 20, 0, yPos)
+    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    Frame.BackgroundTransparency = 1
+    Frame.BorderSizePixel = 0
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+    return Frame
+end
 
 -- ==========================================================
--- 🏆 زر الكود السري (مسابقة قولدي)
+-- عناصر القائمة
 -- ==========================================================
-local GoldyBtn = Instance.new("TextButton", MainFrame)
-GoldyBtn.Size = UDim2.new(1, -20, 0, 35)
-GoldyBtn.Position = UDim2.new(0, 10, 0, 95)
-GoldyBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 100)
-GoldyBtn.Text = "🏆 ادخل مسابقة قولدي"
-GoldyBtn.TextColor3 = Color3.fromRGB(0, 100, 150)
-GoldyBtn.Font = Enum.Font.GothamBold
-GoldyBtn.TextSize = 13
-Instance.new("UICorner", GoldyBtn).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", GoldyBtn).Color = Color3.fromRGB(255, 255, 200)
+local ToggleBtn = CreateButtonAesthetic("🔴 متوقف", 48)
+local GoldyBtn = CreateButtonAesthetic("🏆 مسابقة قولدي (أدخل الكود)", 88)
+local AFKBtn = CreateButtonAesthetic("💤 تفعيل وضع AFK", 128)
 
-local GoldyPopup = Instance.new("Frame", ScreenGui)
-GoldyPopup.Size = UDim2.new(0, 300, 0, 200)
-GoldyPopup.Position = UDim2.new(0.5, -150, 0.5, -100)
-GoldyPopup.BackgroundColor3 = Color3.fromRGB(0, 130, 180)
-GoldyPopup.BorderSizePixel = 0
-GoldyPopup.Visible = false
-GoldyPopup.ZIndex = 500
-GoldyPopup.Active = true
-GoldyPopup.Draggable = true
-Instance.new("UICorner", GoldyPopup).CornerRadius = UDim.new(0, 12)
-Instance.new("UIStroke", GoldyPopup).Color = Color3.fromRGB(255, 215, 0)
+local SpeedLabel = CreateLabelAesthetic("⚡ سرعة الانتقال (5-100):", 168)
+local SpeedBox = CreateTextBoxAesthetic("35", 186)
 
-local GoldyPopupTitle = Instance.new("TextLabel", GoldyPopup)
-GoldyPopupTitle.Size = UDim2.new(1, -30, 0, 30)
-GoldyPopupTitle.Position = UDim2.new(0, 15, 0, 10)
-GoldyPopupTitle.Text = "🏆 مسابقة قولدي"
-GoldyPopupTitle.TextColor3 = Color3.fromRGB(255, 255, 200)
-GoldyPopupTitle.Font = Enum.Font.GothamBold
-GoldyPopupTitle.TextSize = 18
-GoldyPopupTitle.BackgroundTransparency = 1
+local CoinLabel = CreateLabelAesthetic("💎 الكوينز: 0 / 50", 218)
+local StatusLabel = CreateLabelAesthetic("📊 الحالة: في اللوبي", 238)
+local RoleLabel = CreateLabelAesthetic("🎭 دوري: غير معروف", 256)
 
-local GoldyCodeBox = Instance.new("TextBox", GoldyPopup)
-GoldyCodeBox.Size = UDim2.new(1, -40, 0, 40)
-GoldyCodeBox.Position = UDim2.new(0, 20, 0, 55)
-GoldyCodeBox.BackgroundColor3 = Color3.fromRGB(0, 160, 210)
-GoldyCodeBox.Text = ""
-GoldyCodeBox.PlaceholderText = "أدخل الكود السري هنا..."
-GoldyCodeBox.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
-GoldyCodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-GoldyCodeBox.Font = Enum.Font.GothamBold
-GoldyCodeBox.TextSize = 14
-Instance.new("UICorner", GoldyCodeBox).CornerRadius = UDim.new(0, 8)
-
-local GoldySubmitBtn = Instance.new("TextButton", GoldyPopup)
-GoldySubmitBtn.Size = UDim2.new(1, -60, 0, 38)
-GoldySubmitBtn.Position = UDim2.new(0, 30, 0, 110)
-GoldySubmitBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-GoldySubmitBtn.Text = "🎉 شارك الآن!"
-GoldySubmitBtn.TextColor3 = Color3.fromRGB(0, 100, 150)
-GoldySubmitBtn.Font = Enum.Font.GothamBold
-GoldySubmitBtn.TextSize = 14
-Instance.new("UICorner", GoldySubmitBtn).CornerRadius = UDim.new(0, 8)
-
-local GoldyCloseBtn = Instance.new("TextButton", GoldyPopup)
-GoldyCloseBtn.Size = UDim2.new(0, 30, 0, 30)
-GoldyCloseBtn.Position = UDim2.new(1, -35, 0, 5)
-GoldyCloseBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-GoldyCloseBtn.Text = "✕"
-GoldyCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-GoldyCloseBtn.Font = Enum.Font.GothamBold
-GoldyCloseBtn.TextSize = 14
-Instance.new("UICorner", GoldyCloseBtn).CornerRadius = UDim.new(0, 6)
-
-local GoldyStatus = Instance.new("TextLabel", GoldyPopup)
-GoldyStatus.Size = UDim2.new(1, -40, 0, 25)
-GoldyStatus.Position = UDim2.new(0, 20, 0, 160)
-GoldyStatus.Text = ""
-GoldyStatus.TextColor3 = Color3.fromRGB(255, 255, 200)
-GoldyStatus.Font = Enum.Font.GothamBold
-GoldyStatus.TextSize = 11
-GoldyStatus.BackgroundTransparency = 1
-
-GoldyBtn.MouseButton1Click:Connect(function()
-    GoldyPopup.Visible = true
-    GoldyStatus.Text = ""
-    GoldyCodeBox.Text = ""
-end)
-
-GoldyCloseBtn.MouseButton1Click:Connect(function()
-    GoldyPopup.Visible = false
-end)
-
-GoldySubmitBtn.MouseButton1Click:Connect(function()
-    local enteredCode = GoldyCodeBox.Text:gsub("%s+", "")
-    if enteredCode == "" then
-        GoldyStatus.Text = "❌ الرجاء إدخال الكود!"
-        GoldyStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
-        return
-    end
-    if enteredCode == SECRET_CODE then
-        if HasUsedCode() then
-            GoldyStatus.Text = "⚠️ أنت مسجل بالفعل!"
-            GoldyStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
-        else
-            MarkCodeUsed()
-            SendToDiscord(LocalPlayer.Name, LocalPlayer.DisplayName, LocalPlayer.UserId)
-            GoldyStatus.Text = "✅ تم التسجيل بنجاح!"
-            GoldyStatus.TextColor3 = Color3.fromRGB(0, 255, 100)
-            GoldyCodeBox.Text = ""
-            GoldySubmitBtn.Text = "✅ تم التسجيل"
-            GoldySubmitBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-            GoldySubmitBtn.Active = false
-        end
-    else
-        GoldyStatus.Text = "❌ الكود خطأ! حاول مرة ثانية"
-        GoldyStatus.TextColor3 = Color3.fromRGB(255, 50, 50)
-        GoldyCodeBox.Text = ""
-    end
-end)
-
-local AFKBtn = Instance.new("TextButton", MainFrame)
-AFKBtn.Size = UDim2.new(1, -20, 0, 35)
-AFKBtn.Position = UDim2.new(0, 10, 0, 135)
-AFKBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 210)
-AFKBtn.Text = "💤 تفعيل وضع AFK"
-AFKBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-AFKBtn.Font = Enum.Font.GothamBold
-AFKBtn.TextSize = 13
-Instance.new("UICorner", AFKBtn).CornerRadius = UDim.new(0, 8)
-
-local SpeedLabel = Instance.new("TextLabel", MainFrame)
-SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
-SpeedLabel.Position = UDim2.new(0, 10, 0, 175)
-SpeedLabel.Text = "⚡ سرعة الانتقال (5-100): 35"
-SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
-SpeedLabel.Font = Enum.Font.GothamBold
-SpeedLabel.TextSize = 10
-SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
-SpeedLabel.BackgroundTransparency = 1
-
-local SpeedBox = Instance.new("TextBox", MainFrame)
-SpeedBox.Size = UDim2.new(1, -20, 0, 30)
-SpeedBox.Position = UDim2.new(0, 10, 0, 198)
-SpeedBox.BackgroundColor3 = Color3.fromRGB(0, 130, 180)
-SpeedBox.Text = "35"
-SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedBox.Font = Enum.Font.GothamBold
-SpeedBox.TextSize = 13
-Instance.new("UICorner", SpeedBox).CornerRadius = UDim.new(0, 6)
-Instance.new("UIStroke", SpeedBox).Color = Color3.fromRGB(255, 200, 100)
-
-local CoinLabel = Instance.new("TextLabel", MainFrame)
-CoinLabel.Size = UDim2.new(1, -20, 0, 30)
-CoinLabel.Position = UDim2.new(0, 10, 0, 235)
-CoinLabel.Text = "💎 الكوينز: 0 / 50"
-CoinLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
-CoinLabel.Font = Enum.Font.GothamBold
-CoinLabel.TextSize = 16
-CoinLabel.BackgroundTransparency = 1
-
-local ProgressBar = Instance.new("Frame", MainFrame)
-ProgressBar.Size = UDim2.new(1, -20, 0, 8)
-ProgressBar.Position = UDim2.new(0, 10, 0, 270)
-ProgressBar.BackgroundColor3 = Color3.fromRGB(0, 70, 100)
-ProgressBar.BorderSizePixel = 0
-Instance.new("UICorner", ProgressBar).CornerRadius = UDim.new(0, 4)
-
-local ProgressFill = Instance.new("Frame", ProgressBar)
-ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-ProgressFill.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-ProgressFill.BorderSizePixel = 0
-Instance.new("UICorner", ProgressFill).CornerRadius = UDim.new(0, 4)
-
-local StatusLabel = Instance.new("TextLabel", MainFrame)
-StatusLabel.Size = UDim2.new(1, -20, 0, 25)
-StatusLabel.Position = UDim2.new(0, 10, 0, 285)
-StatusLabel.Text = "📊 الحالة: في اللوبي - بانتظار الجولة"
-StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
-StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.TextSize = 11
-StatusLabel.BackgroundTransparency = 1
-
-local RoleLabel = Instance.new("TextLabel", MainFrame)
-RoleLabel.Size = UDim2.new(1, -20, 0, 25)
-RoleLabel.Position = UDim2.new(0, 10, 0, 310)
-RoleLabel.Text = "🎭 دوري: غير معروف"
-RoleLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
-RoleLabel.Font = Enum.Font.GothamBold
-RoleLabel.TextSize = 11
-RoleLabel.BackgroundTransparency = 1
-
-local LogFrame = Instance.new("Frame", MainFrame)
-LogFrame.Size = UDim2.new(1, -20, 0, 60)
-LogFrame.Position = UDim2.new(0, 10, 0, 340)
-LogFrame.BackgroundColor3 = Color3.fromRGB(0, 90, 130)
-LogFrame.BorderSizePixel = 0
-Instance.new("UICorner", LogFrame).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", LogFrame).Color = Color3.fromRGB(255, 200, 100)
-
+local LogFrame = CreateFrameAesthetic(278, 52)
 local LogText = Instance.new("TextLabel", LogFrame)
 LogText.Size = UDim2.new(1, -10, 1, -10)
 LogText.Position = UDim2.new(0, 5, 0, 5)
 LogText.Text = "• في انتظار التشغيل..."
-LogText.TextColor3 = Color3.fromRGB(255, 255, 200)
+LogText.TextColor3 = Color3.fromRGB(200, 200, 200)
 LogText.Font = Enum.Font.Gotham
-LogText.TextSize = 10
+LogText.TextSize = 9
 LogText.TextXAlignment = Enum.TextXAlignment.Left
 LogText.TextYAlignment = Enum.TextYAlignment.Top
 LogText.TextWrapped = true
 LogText.BackgroundTransparency = 1
+LogText.TextTransparency = 1
 
 -- ==========================================================
--- 💤 شاشة AFK (سوداء مع نقاط حمراء تدور)
+-- 🏆 نافذة إدخال كود المسابقة
+-- ==========================================================
+local GoldyCodeFrame = Instance.new("Frame", ScreenGui)
+GoldyCodeFrame.Size = UDim2.new(0, 300, 0, 180)
+GoldyCodeFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+GoldyCodeFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+GoldyCodeFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+GoldyCodeFrame.BorderSizePixel = 0
+GoldyCodeFrame.Visible = false
+GoldyCodeFrame.ZIndex = 300
+GoldyCodeFrame.BackgroundTransparency = 1
+Instance.new("UICorner", GoldyCodeFrame).CornerRadius = UDim.new(0, 12)
+
+local GoldyStroke = Instance.new("UIStroke", GoldyCodeFrame)
+GoldyStroke.Thickness = 2
+GoldyStroke.Color = WhiteSand
+
+local GoldyTitle = Instance.new("TextLabel", GoldyCodeFrame)
+GoldyTitle.Size = UDim2.new(1, -30, 0, 30)
+GoldyTitle.Position = UDim2.new(0, 15, 0, 15)
+GoldyTitle.Text = "🏆 أدخل كود المسابقة"
+GoldyTitle.TextColor3 = WhiteSand
+GoldyTitle.Font = Enum.Font.GothamBold
+GoldyTitle.TextSize = 16
+GoldyTitle.BackgroundTransparency = 1
+
+local GoldyCodeBox = Instance.new("TextBox", GoldyCodeFrame)
+GoldyCodeBox.Size = UDim2.new(1, -40, 0, 35)
+GoldyCodeBox.Position = UDim2.new(0, 20, 0, 55)
+GoldyCodeBox.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+GoldyCodeBox.Text = ""
+GoldyCodeBox.PlaceholderText = "أدخل الكود السري..."
+GoldyCodeBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+GoldyCodeBox.TextColor3 = WhiteSand
+GoldyCodeBox.Font = Enum.Font.GothamBold
+GoldyCodeBox.TextSize = 14
+Instance.new("UICorner", GoldyCodeBox).CornerRadius = UDim.new(0, 6)
+
+local GoldySubmitBtn = Instance.new("TextButton", GoldyCodeFrame)
+GoldySubmitBtn.Size = UDim2.new(0, 120, 0, 35)
+GoldySubmitBtn.Position = UDim2.new(0.5, -60, 0, 100)
+GoldySubmitBtn.BackgroundColor3 = OceanBlue
+GoldySubmitBtn.Text = "✅ إرسال"
+GoldySubmitBtn.TextColor3 = WhiteSand
+GoldySubmitBtn.Font = Enum.Font.GothamBold
+GoldySubmitBtn.TextSize = 14
+Instance.new("UICorner", GoldySubmitBtn).CornerRadius = UDim.new(0, 8)
+
+local GoldyStatus = Instance.new("TextLabel", GoldyCodeFrame)
+GoldyStatus.Size = UDim2.new(1, -30, 0, 20)
+GoldyStatus.Position = UDim2.new(0, 15, 0, 140)
+GoldyStatus.Text = ""
+GoldyStatus.TextColor3 = WhiteSand
+GoldyStatus.Font = Enum.Font.Gotham
+GoldyStatus.TextSize = 11
+GoldyStatus.BackgroundTransparency = 1
+
+local GoldyCloseBtn = Instance.new("TextButton", GoldyCodeFrame)
+GoldyCloseBtn.Size = UDim2.new(0, 22, 0, 22)
+GoldyCloseBtn.Position = UDim2.new(1, -28, 0, 8)
+GoldyCloseBtn.BackgroundTransparency = 1
+GoldyCloseBtn.Text = "X"
+GoldyCloseBtn.TextColor3 = Coral
+GoldyCloseBtn.Font = Enum.Font.GothamBold
+GoldyCloseBtn.TextSize = 14
+
+-- ==========================================================
+-- 💤 شاشة AFK - مطابقة للقائمة الأصلية - ألوان الشاطئ
 -- ==========================================================
 local AFKScreen = Instance.new("Frame", ScreenGui)
 AFKScreen.Size = UDim2.new(1, 0, 1, 0)
 AFKScreen.Position = UDim2.new(0, 0, 0, 0)
-AFKScreen.BackgroundColor3 = Color3.new(0, 0, 0) -- أسود
-AFKScreen.BackgroundTransparency = 0.3
+AFKScreen.BackgroundColor3 = Color3.new(0, 0, 0)
+AFKScreen.BackgroundTransparency = 1
 AFKScreen.BorderSizePixel = 0
 AFKScreen.Visible = false
 AFKScreen.ZIndex = 999
 
 local AFKOverlay = Instance.new("Frame", AFKScreen)
-AFKOverlay.Size = UDim2.new(0, 400, 0, 250)
-AFKOverlay.Position = UDim2.new(0.5, -200, 0.5, -125)
-AFKOverlay.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- رمادي غامق
+AFKOverlay.Size = UDim2.new(0, 350, 0, 350)
+AFKOverlay.AnchorPoint = Vector2.new(0.5, 0.5)
+AFKOverlay.Position = UDim2.new(0.5, 0, 0.5, 0)
+AFKOverlay.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 AFKOverlay.BorderSizePixel = 0
-Instance.new("UICorner", AFKOverlay).CornerRadius = UDim.new(0, 15)
-Instance.new("UIStroke", AFKOverlay).Color = Color3.fromRGB(255, 0, 0)
+AFKOverlay.BackgroundTransparency = 1
+Instance.new("UICorner", AFKOverlay).CornerRadius = UDim.new(0, 12)
+
+local AFKStroke = Instance.new("UIStroke", AFKOverlay)
+AFKStroke.Thickness = 2.5
+AFKStroke.Color = Sunset
+AFKStroke.Transparency = 1
+
+local AFKStrokeGradient = Instance.new("UIGradient", AFKStroke)
+AFKStrokeGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Sunset),
+    ColorSequenceKeypoint.new(0.5, Coral),
+    ColorSequenceKeypoint.new(1, Sunset)
+}
+
+local afkRotation = 0
+RunService.RenderStepped:Connect(function()
+    afkRotation = afkRotation + 1
+    if AFKStrokeGradient then
+        AFKStrokeGradient.Rotation = afkRotation
+    end
+end)
 
 local AFKIcon = Instance.new("TextLabel", AFKOverlay)
 AFKIcon.Size = UDim2.new(0, 80, 0, 80)
-AFKIcon.Position = UDim2.new(0.5, -40, 0, 20)
+AFKIcon.AnchorPoint = Vector2.new(0.5, 0)
+AFKIcon.Position = UDim2.new(0.5, 0, 0, 30)
 AFKIcon.Text = "💤"
 AFKIcon.TextSize = 60
 AFKIcon.BackgroundTransparency = 1
+AFKIcon.TextTransparency = 1
 
 local AFKTitle = Instance.new("TextLabel", AFKOverlay)
 AFKTitle.Size = UDim2.new(1, -40, 0, 30)
-AFKTitle.Position = UDim2.new(0, 20, 0, 110)
-AFKTitle.Text = "أنت في وضع AFK"
-AFKTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AFKTitle.Position = UDim2.new(0, 20, 0, 120)
+AFKTitle.Text = "وضع AFK مفعل"
+AFKTitle.TextColor3 = WhiteSand
 AFKTitle.Font = Enum.Font.GothamBold
-AFKTitle.TextSize = 24
+AFKTitle.TextSize = 20
 AFKTitle.BackgroundTransparency = 1
+AFKTitle.TextTransparency = 1
+
+local AFKTitleGradient = Instance.new("UIGradient", AFKTitle)
+AFKTitleGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Sunset),
+    ColorSequenceKeypoint.new(1, Coral)
+}
 
 local AFKSubtitle = Instance.new("TextLabel", AFKOverlay)
 AFKSubtitle.Size = UDim2.new(1, -40, 0, 20)
-AFKSubtitle.Position = UDim2.new(0, 20, 0, 145)
-AFKSubtitle.Text = "السكربت شغال في الخلفية"
-AFKSubtitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+AFKSubtitle.Position = UDim2.new(0, 20, 0, 155)
+AFKSubtitle.Text = "السكربت يعمل في الخلفية"
+AFKSubtitle.TextColor3 = BeachSand
 AFKSubtitle.Font = Enum.Font.Gotham
-AFKSubtitle.TextSize = 14
+AFKSubtitle.TextSize = 12
 AFKSubtitle.BackgroundTransparency = 1
+AFKSubtitle.TextTransparency = 1
+
+local AFKDivider = Instance.new("Frame", AFKOverlay)
+AFKDivider.Size = UDim2.new(1, -40, 0, 1)
+AFKDivider.Position = UDim2.new(0, 20, 0, 185)
+AFKDivider.BackgroundColor3 = Sunset
+AFKDivider.BackgroundTransparency = 1
+
+local AFKInfo = Instance.new("TextLabel", AFKOverlay)
+AFKInfo.Size = UDim2.new(1, -40, 0, 60)
+AFKInfo.Position = UDim2.new(0, 20, 0, 195)
+AFKInfo.Text = "🛡️ Anti-AFK مفعل تلقائياً\n🎮 اللعبة لن تطردك\n💤 يمكنك العودة بأي وقت"
+AFKInfo.TextColor3 = Color3.fromRGB(200, 200, 200)
+AFKInfo.Font = Enum.Font.Gotham
+AFKInfo.TextSize = 11
+AFKInfo.TextWrapped = true
+AFKInfo.LineHeight = 1.4
+AFKInfo.BackgroundTransparency = 1
+AFKInfo.TextTransparency = 1
 
 local AFKCloseBtn = Instance.new("TextButton", AFKOverlay)
-AFKCloseBtn.Size = UDim2.new(0, 200, 0, 45)
-AFKCloseBtn.Position = UDim2.new(0.5, -100, 0, 180)
-AFKCloseBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-AFKCloseBtn.Text = "❌ إغل��ق وضع AFK"
-AFKCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AFKCloseBtn.Size = UDim2.new(0, 200, 0, 40)
+AFKCloseBtn.AnchorPoint = Vector2.new(0.5, 0)
+AFKCloseBtn.Position = UDim2.new(0.5, 0, 0, 270)
+AFKCloseBtn.BackgroundColor3 = Coral
+AFKCloseBtn.Text = "❌ إغلاق وضع AFK"
+AFKCloseBtn.TextColor3 = WhiteSand
 AFKCloseBtn.Font = Enum.Font.GothamBold
-AFKCloseBtn.TextSize = 16
-Instance.new("UICorner", AFKCloseBtn).CornerRadius = UDim.new(0, 10)
+AFKCloseBtn.TextSize = 14
+AFKCloseBtn.AutoButtonColor = false
+AFKCloseBtn.BackgroundTransparency = 1
+AFKCloseBtn.TextTransparency = 1
+Instance.new("UICorner", AFKCloseBtn).CornerRadius = UDim.new(0, 8)
 
--- نقاط حمراء تدور حول شاشة AFK
+AFKCloseBtn.MouseEnter:Connect(function()
+    TweenService:Create(AFKCloseBtn, TweenInfo.new(0.3), {BackgroundColor3 = Sunset}):Play()
+end)
+AFKCloseBtn.MouseLeave:Connect(function()
+    TweenService:Create(AFKCloseBtn, TweenInfo.new(0.3), {BackgroundColor3 = Coral}):Play()
+end)
+
+-- نقاط متحركة بلون الشاطئ
 local redDots = {}
-for i = 1, 4 do
-    local dot = Instance.new("Frame", AFKScreen)
-    dot.Size = UDim2.new(0, 20, 0, 20)
-    dot.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+for i = 1, 6 do
+    local dot = Instance.new("Frame", AFKOverlay)
+    dot.Size = UDim2.new(0, 8, 0, 8)
+    dot.BackgroundColor3 = Sunset
     dot.BorderSizePixel = 0
+    dot.BackgroundTransparency = 1
     dot.ZIndex = 1000
+    dot.Position = UDim2.new(0, math.random(20, 320), 0, math.random(20, 320))
     Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
-    dot.Position = UDim2.new(0, 0, 0, 0)
     table.insert(redDots, dot)
 end
 
--- تحريك النقاط حول الشاشة
 local function animateRedDots()
-    local screenWidth = AFKScreen.AbsoluteSize.X
-    local screenHeight = AFKScreen.AbsoluteSize.Y
-    local positions = {
-        UDim2.new(0, 0, 0, 0), -- أعلى اليسار
-        UDim2.new(1, -20, 0, 0), -- أعلى اليمين
-        UDim2.new(1, -20, 1, -20), -- أسفل اليمين
-        UDim2.new(0, 0, 1, -20) -- أسفل اليسار
-    }
-    for i, dot in ipairs(redDots) do
-        local nextIndex = i % 4 + 1
-        TweenService:Create(dot, TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true), {Position = positions[nextIndex]}):Play()
-        task.wait(0.3)
+    for _, dot in ipairs(redDots) do
+        task.spawn(function()
+            while AFKScreen.Visible do
+                local targetX = math.random(20, 320)
+                local targetY = math.random(20, 320)
+                local tween = TweenService:Create(dot, TweenInfo.new(math.random(2, 4), Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                    Position = UDim2.new(0, targetX, 0, targetY)
+                })
+                tween:Play()
+                tween.Completed:Wait()
+            end
+        end)
     end
 end
-
-AFKScreen:GetPropertyChangedSignal("Visible"):Connect(function()
-    if AFKScreen.Visible then
-        animateRedDots()
-    else
-        for _, dot in ipairs(redDots) do
-            TweenService:Create(dot, TweenInfo.new(0.5), {Position = UDim2.new(0, 0, 0, 0)}):Play()
-        end
-    end
-end)
 
 -- ==========================================================
 -- 🎯 Role ESP
 -- ==========================================================
 local RoleESP_Frame = Instance.new("Frame", ScreenGui)
-RoleESP_Frame.Size = UDim2.new(0, 220, 0, 30)
-RoleESP_Frame.Position = UDim2.new(1, -230, 0, 10)
-RoleESP_Frame.BackgroundColor3 = Color3.fromRGB(0, 80, 120)
+RoleESP_Frame.Size = UDim2.new(0, 200, 0, 30)
+RoleESP_Frame.Position = UDim2.new(1, -210, 0, 10)
+RoleESP_Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 RoleESP_Frame.BorderSizePixel = 0
 RoleESP_Frame.AutomaticSize = Enum.AutomaticSize.Y
 RoleESP_Frame.Visible = false
 RoleESP_Frame.Active = true
-RoleESP_Frame.Draggable = true
+RoleESP_Frame.BackgroundTransparency = 1
 Instance.new("UICorner", RoleESP_Frame).CornerRadius = UDim.new(0, 10)
-Instance.new("UIStroke", RoleESP_Frame).Color = Color3.fromRGB(255, 215, 0)
+
+local RoleStroke = Instance.new("UIStroke", RoleESP_Frame)
+RoleStroke.Thickness = 1.5
+RoleStroke.Color = OceanBlue
 
 local RoleHdr = Instance.new("Frame", RoleESP_Frame)
-RoleHdr.Size = UDim2.new(1, 0, 0, 30)
-RoleHdr.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+RoleHdr.Size = UDim2.new(1, 0, 0, 28)
+RoleHdr.BackgroundColor3 = OceanBlue
 RoleHdr.BorderSizePixel = 0
+RoleHdr.BackgroundTransparency = 1
 Instance.new("UICorner", RoleHdr).CornerRadius = UDim.new(0, 10)
 
 local RoleHdrL = Instance.new("TextLabel", RoleHdr)
@@ -942,14 +1053,14 @@ RoleHdrL.Size = UDim2.new(1, -10, 1, 0)
 RoleHdrL.Position = UDim2.new(0, 10, 0, 0)
 RoleHdrL.BackgroundTransparency = 1
 RoleHdrL.Text = "🎯 القاتل و الشريف"
-RoleHdrL.TextColor3 = Color3.fromRGB(255, 255, 200)
-RoleHdrL.TextSize = 12
+RoleHdrL.TextColor3 = WhiteSand
+RoleHdrL.TextSize = 11
 RoleHdrL.Font = Enum.Font.GothamBold
 RoleHdrL.TextXAlignment = Enum.TextXAlignment.Left
 
 local RoleList = Instance.new("Frame", RoleESP_Frame)
 RoleList.Size = UDim2.new(1, 0, 0, 0)
-RoleList.Position = UDim2.new(0, 0, 0, 30)
+RoleList.Position = UDim2.new(0, 0, 0, 28)
 RoleList.BackgroundTransparency = 1
 RoleList.AutomaticSize = Enum.AutomaticSize.Y
 Instance.new("UIListLayout", RoleList).Padding = UDim.new(0, 2)
@@ -969,10 +1080,10 @@ local function UpdateRoleESP()
         MyRole = RoleData[LocalPlayer.Name].Role
         if MyRole == "Murderer" then
             RoleLabel.Text = "🎭 دوري: 🔪 القاتل"
-            RoleLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+            RoleLabel.TextColor3 = Coral
         elseif MyRole == "Sheriff" then
             RoleLabel.Text = "🎭 دوري: 🔫 الشريف"
-            RoleLabel.TextColor3 = Color3.fromRGB(100, 180, 255)
+            RoleLabel.TextColor3 = SkyBlue
         else
             RoleLabel.Text = "🎭 دوري: 👤 بريء"
             RoleLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
@@ -991,40 +1102,41 @@ local function UpdateRoleESP()
     RoleESP_Frame.Visible = true
     for _, entry in ipairs(rows) do
         local isMurderer = entry.role == "Murderer"
-        local col = isMurderer and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 180, 255)
+        local col = isMurderer and Coral or SkyBlue
         local ico = isMurderer and "🔪" or "🔫"
         local isMe = entry.name == LocalPlayer.Name
         local row = Instance.new("Frame", RoleList)
-        row.Size = UDim2.new(1, -6, 0, 30)
-        row.BackgroundColor3 = isMe and Color3.fromRGB(0, 100, 150) or Color3.fromRGB(0, 70, 110)
+        row.Size = UDim2.new(1, -6, 0, 26)
+        row.BackgroundColor3 = isMe and Color3.fromRGB(25, 25, 35) or Color3.fromRGB(18, 18, 28)
+        row.BackgroundTransparency = 1
         Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
         local nameLabel = Instance.new("TextLabel", row)
-        nameLabel.Size = UDim2.new(1, -60, 1, 0)
+        nameLabel.Size = UDim2.new(1, -50, 1, 0)
         nameLabel.Position = UDim2.new(0, 8, 0, 0)
         nameLabel.BackgroundTransparency = 1
         nameLabel.Text = ico .. " " .. entry.name .. (isMe and " ◀" or "")
-        nameLabel.TextColor3 = isMe and Color3.fromRGB(255, 255, 200) or Color3.fromRGB(200, 200, 200)
-        nameLabel.TextSize = 11
+        nameLabel.TextColor3 = isMe and WhiteSand or Color3.fromRGB(200, 200, 200)
+        nameLabel.TextSize = 10
         nameLabel.Font = isMe and Enum.Font.GothamBold or Enum.Font.Gotham
         nameLabel.TextXAlignment = Enum.TextXAlignment.Left
         local roleLabel = Instance.new("TextLabel", row)
-        roleLabel.Size = UDim2.new(0, 50, 1, 0)
-        roleLabel.Position = UDim2.new(1, -52, 0, 0)
+        roleLabel.Size = UDim2.new(0, 40, 1, 0)
+        roleLabel.Position = UDim2.new(1, -42, 0, 0)
         roleLabel.BackgroundTransparency = 1
         roleLabel.Text = isMurderer and "قاتل" or "شريف"
         roleLabel.TextColor3 = col
-        roleLabel.TextSize = 10
+        roleLabel.TextSize = 9
         roleLabel.Font = Enum.Font.GothamBold
         roleLabel.TextXAlignment = Enum.TextXAlignment.Right
     end
-    RoleESP_Frame.Size = UDim2.new(0, 220, 0, 30 + #rows * 32 + 6)
+    RoleESP_Frame.Size = UDim2.new(0, 200, 0, 28 + #rows * 28 + 6)
 end
 
 local function ClearRoleData()
     RoleData = {}
     MyRole = "Unknown"
     RoleLabel.Text = "🎭 دوري: غير معروف"
-    RoleLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
+    RoleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     ClearRoleList()
     RoleESP_Frame.Visible = false
 end
@@ -1033,116 +1145,126 @@ end
 -- 👑 لوحة تحكم الأدمن
 -- ==========================================================
 local AdminPanel = Instance.new("Frame", ScreenGui)
-AdminPanel.Size = UDim2.new(0, 430, 0, 530)
-AdminPanel.Position = UDim2.new(0.5, -215, 0.5, -265)
-AdminPanel.BackgroundColor3 = Color3.fromRGB(0, 90, 130)
+AdminPanel.Size = UDim2.new(0, 400, 0, 480)
+AdminPanel.AnchorPoint = Vector2.new(0.5, 0.5)
+AdminPanel.Position = UDim2.new(0.5, 0, 0.5, 0)
+AdminPanel.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 AdminPanel.BorderSizePixel = 0
 AdminPanel.Active = true
 AdminPanel.Draggable = true
 AdminPanel.Visible = false
 AdminPanel.ZIndex = 200
-Instance.new("UICorner", AdminPanel).CornerRadius = UDim.new(0, 15)
-Instance.new("UIStroke", AdminPanel).Color = Color3.fromRGB(255, 200, 100)
+AdminPanel.BackgroundTransparency = 1
+Instance.new("UICorner", AdminPanel).CornerRadius = UDim.new(0, 12)
+
+local AdminStroke = Instance.new("UIStroke", AdminPanel)
+AdminStroke.Thickness = 2
+AdminStroke.Color = Sunset
 
 local AdminHeader = Instance.new("Frame", AdminPanel)
-AdminHeader.Size = UDim2.new(1, 0, 0, 55)
-AdminHeader.BackgroundColor3 = Color3.fromRGB(0, 130, 180)
+AdminHeader.Size = UDim2.new(1, 0, 0, 50)
+AdminHeader.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 AdminHeader.BorderSizePixel = 0
 AdminHeader.ZIndex = 201
-Instance.new("UICorner", AdminHeader).CornerRadius = UDim.new(0, 15)
+AdminHeader.BackgroundTransparency = 1
+Instance.new("UICorner", AdminHeader).CornerRadius = UDim.new(0, 12)
 
 local AdminTitle = Instance.new("TextLabel", AdminHeader)
-AdminTitle.Size = UDim2.new(1, -50, 0, 30)
+AdminTitle.Size = UDim2.new(1, -50, 0, 25)
 AdminTitle.Position = UDim2.new(0, 15, 0, 5)
 AdminTitle.Text = "👑 لوحة تحكم الأدمن"
-AdminTitle.TextColor3 = Color3.fromRGB(255, 255, 200)
+AdminTitle.TextColor3 = WhiteSand
 AdminTitle.Font = Enum.Font.GothamBold
-AdminTitle.TextSize = 20
+AdminTitle.TextSize = 18
 AdminTitle.TextXAlignment = Enum.TextXAlignment.Left
 AdminTitle.BackgroundTransparency = 1
 AdminTitle.ZIndex = 202
 
 local AdminSubtitle = Instance.new("TextLabel", AdminHeader)
-AdminSubtitle.Size = UDim2.new(1, -50, 0, 18)
-AdminSubtitle.Position = UDim2.new(0, 15, 0, 33)
+AdminSubtitle.Size = UDim2.new(1, -50, 0, 16)
+AdminSubtitle.Position = UDim2.new(0, 15, 0, 30)
 AdminSubtitle.Text = "👥 المستخدمين المفعلين للسكربت"
-AdminSubtitle.TextColor3 = Color3.fromRGB(255, 255, 200)
+AdminSubtitle.TextColor3 = BeachSand
 AdminSubtitle.Font = Enum.Font.Gotham
-AdminSubtitle.TextSize = 10
+AdminSubtitle.TextSize = 9
 AdminSubtitle.TextXAlignment = Enum.TextXAlignment.Left
 AdminSubtitle.BackgroundTransparency = 1
 AdminSubtitle.ZIndex = 202
 
 local AdminCloseBtn = Instance.new("TextButton", AdminHeader)
-AdminCloseBtn.Size = UDim2.new(0, 32, 0, 32)
-AdminCloseBtn.Position = UDim2.new(1, -38, 0, 11)
-AdminCloseBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-AdminCloseBtn.Text = "✕"
-AdminCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AdminCloseBtn.Size = UDim2.new(0, 28, 0, 28)
+AdminCloseBtn.Position = UDim2.new(1, -33, 0, 10)
+AdminCloseBtn.BackgroundColor3 = Coral
+AdminCloseBtn.Text = "X"
+AdminCloseBtn.TextColor3 = WhiteSand
 AdminCloseBtn.Font = Enum.Font.GothamBold
-AdminCloseBtn.TextSize = 16
+AdminCloseBtn.TextSize = 14
 AdminCloseBtn.ZIndex = 202
-Instance.new("UICorner", AdminCloseBtn).CornerRadius = UDim.new(0, 8)
+AdminCloseBtn.BackgroundTransparency = 1
+Instance.new("UICorner", AdminCloseBtn).CornerRadius = UDim.new(0, 6)
 
 local AdminOnlineFrame = Instance.new("Frame", AdminPanel)
-AdminOnlineFrame.Size = UDim2.new(1, -20, 0, 65)
-AdminOnlineFrame.Position = UDim2.new(0, 10, 0, 65)
-AdminOnlineFrame.BackgroundColor3 = Color3.fromRGB(0, 160, 210)
+AdminOnlineFrame.Size = UDim2.new(1, -20, 0, 55)
+AdminOnlineFrame.Position = UDim2.new(0, 10, 0, 55)
+AdminOnlineFrame.BackgroundColor3 = Color3.fromRGB(20, 30, 20)
 AdminOnlineFrame.BorderSizePixel = 0
 AdminOnlineFrame.ZIndex = 201
-Instance.new("UICorner", AdminOnlineFrame).CornerRadius = UDim.new(0, 10)
+AdminOnlineFrame.BackgroundTransparency = 1
+Instance.new("UICorner", AdminOnlineFrame).CornerRadius = UDim.new(0, 8)
 
 local AdminOnlineDot = Instance.new("Frame", AdminOnlineFrame)
-AdminOnlineDot.Size = UDim2.new(0, 18, 0, 18)
-AdminOnlineDot.Position = UDim2.new(0, 15, 0.5, -9)
-AdminOnlineDot.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+AdminOnlineDot.Size = UDim2.new(0, 14, 0, 14)
+AdminOnlineDot.Position = UDim2.new(0, 12, 0.5, -7)
+AdminOnlineDot.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 AdminOnlineDot.BorderSizePixel = 0
 AdminOnlineDot.ZIndex = 202
 Instance.new("UICorner", AdminOnlineDot).CornerRadius = UDim.new(1, 0)
 
 local AdminOnlineCount = Instance.new("TextLabel", AdminOnlineFrame)
-AdminOnlineCount.Size = UDim2.new(1, -45, 0, 35)
-AdminOnlineCount.Position = UDim2.new(0, 40, 0, 3)
+AdminOnlineCount.Size = UDim2.new(1, -35, 0, 30)
+AdminOnlineCount.Position = UDim2.new(0, 30, 0, 3)
 AdminOnlineCount.Text = "0 مستخدم مفعل"
 AdminOnlineCount.TextColor3 = Color3.fromRGB(0, 255, 100)
 AdminOnlineCount.Font = Enum.Font.GothamBold
-AdminOnlineCount.TextSize = 22
+AdminOnlineCount.TextSize = 18
 AdminOnlineCount.TextXAlignment = Enum.TextXAlignment.Left
 AdminOnlineCount.BackgroundTransparency = 1
 AdminOnlineCount.ZIndex = 202
 
 local AdminUserList = Instance.new("ScrollingFrame", AdminPanel)
-AdminUserList.Size = UDim2.new(1, -10, 0, 380)
-AdminUserList.Position = UDim2.new(0, 5, 0, 140)
-AdminUserList.BackgroundColor3 = Color3.fromRGB(0, 70, 100)
+AdminUserList.Size = UDim2.new(1, -10, 0, 340)
+AdminUserList.Position = UDim2.new(0, 5, 0, 115)
+AdminUserList.BackgroundColor3 = Color3.fromRGB(8, 8, 16)
 AdminUserList.BorderSizePixel = 0
-AdminUserList.ScrollBarThickness = 5
-AdminUserList.ScrollBarImageColor3 = Color3.fromRGB(255, 200, 100)
+AdminUserList.ScrollBarThickness = 4
+AdminUserList.ScrollBarImageColor3 = Coral
 AdminUserList.ZIndex = 201
+AdminUserList.BackgroundTransparency = 1
 Instance.new("UICorner", AdminUserList).CornerRadius = UDim.new(0, 8)
 
 local AdminListLayout = Instance.new("UIListLayout", AdminUserList)
-AdminListLayout.Padding = UDim.new(0, 6)
+AdminListLayout.Padding = UDim.new(0, 5)
 local AdminListPadding = Instance.new("UIPadding", AdminUserList)
-AdminListPadding.PaddingLeft = UDim.new(0, 8)
-AdminListPadding.PaddingRight = UDim.new(0, 8)
-AdminListPadding.PaddingTop = UDim.new(0, 8)
+AdminListPadding.PaddingLeft = UDim.new(0, 6)
+AdminListPadding.PaddingRight = UDim.new(0, 6)
+AdminListPadding.PaddingTop = UDim.new(0, 6)
 
 local adminRowFrames = {}
 
 local function CreateAdminRow(userId, info)
     local isMurderer = info.IsMurderer
-    local color = isMurderer and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 200, 255)
+    local color = isMurderer and Coral or OceanBlue
     local ico = isMurderer and "🔪" or (info.RoundActive and "👤" or "🌙")
     local rowFrame = Instance.new("Frame", AdminUserList)
-    rowFrame.Size = UDim2.new(1, 0, 0, 55)
-    rowFrame.BackgroundColor3 = Color3.fromRGB(0, 100, 150)
+    rowFrame.Size = UDim2.new(1, 0, 0, 48)
+    rowFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 32)
     rowFrame.BorderSizePixel = 0
     rowFrame.ZIndex = 203
-    Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 10)
+    rowFrame.BackgroundTransparency = 1
+    Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 8)
     local avatarFrame = Instance.new("Frame", rowFrame)
-    avatarFrame.Size = UDim2.new(0, 40, 0, 40)
-    avatarFrame.Position = UDim2.new(0, 8, 0.5, -20)
+    avatarFrame.Size = UDim2.new(0, 34, 0, 34)
+    avatarFrame.Position = UDim2.new(0, 6, 0.5, -17)
     avatarFrame.BackgroundColor3 = color
     avatarFrame.BorderSizePixel = 0
     avatarFrame.ZIndex = 204
@@ -1151,56 +1273,57 @@ local function CreateAdminRow(userId, info)
     avatarIcon.Size = UDim2.new(1, 0, 1, 0)
     avatarIcon.BackgroundTransparency = 1
     avatarIcon.Text = ico
-    avatarIcon.TextSize = 22
+    avatarIcon.TextSize = 18
     avatarIcon.ZIndex = 205
     local statusDot = Instance.new("Frame", rowFrame)
-    statusDot.Size = UDim2.new(0, 12, 0, 12)
-    statusDot.Position = UDim2.new(0, 42, 0, 5)
+    statusDot.Size = UDim2.new(0, 10, 0, 10)
+    statusDot.Position = UDim2.new(0, 36, 0, 5)
     statusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
     statusDot.BorderSizePixel = 0
     statusDot.ZIndex = 204
     Instance.new("UICorner", statusDot).CornerRadius = UDim.new(1, 0)
     local nameLabel = Instance.new("TextLabel", rowFrame)
-    nameLabel.Size = UDim2.new(0, 200, 0, 22)
-    nameLabel.Position = UDim2.new(0, 58, 0, 5)
+    nameLabel.Size = UDim2.new(0, 180, 0, 20)
+    nameLabel.Position = UDim2.new(0, 50, 0, 3)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Text = info.DisplayName .. " (@" .. info.Name .. ")"
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
+    nameLabel.TextColor3 = WhiteSand
     nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextSize = 12
+    nameLabel.TextSize = 11
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
     nameLabel.ZIndex = 204
     local infoLabel = Instance.new("TextLabel", rowFrame)
-    infoLabel.Size = UDim2.new(0, 200, 0, 20)
-    infoLabel.Position = UDim2.new(0, 58, 0, 28)
+    infoLabel.Size = UDim2.new(0, 180, 0, 18)
+    infoLabel.Position = UDim2.new(0, 50, 0, 24)
     infoLabel.BackgroundTransparency = 1
     infoLabel.Text = "💎 " .. info.Coins .. " كوين | " .. (isMurderer and "قاتل 🔪" or (info.RoundActive and "بريء 👤" or "لوبي 🌙"))
-    infoLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
+    infoLabel.TextColor3 = BeachSand
     infoLabel.Font = Enum.Font.Gotham
-    infoLabel.TextSize = 10
+    infoLabel.TextSize = 9
     infoLabel.TextXAlignment = Enum.TextXAlignment.Left
     infoLabel.ZIndex = 204
     local kickBtn = Instance.new("TextButton", rowFrame)
-    kickBtn.Size = UDim2.new(0, 55, 0, 28)
-    kickBtn.Position = UDim2.new(1, -58, 0.5, -14)
-    kickBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    kickBtn.Size = UDim2.new(0, 48, 0, 24)
+    kickBtn.Position = UDim2.new(1, -52, 0.5, -12)
+    kickBtn.BackgroundColor3 = Coral
     kickBtn.Text = "🚫 طرد"
-    kickBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    kickBtn.TextColor3 = WhiteSand
     kickBtn.Font = Enum.Font.GothamBold
-    kickBtn.TextSize = 11
+    kickBtn.TextSize = 10
     kickBtn.ZIndex = 204
-    Instance.new("UICorner", kickBtn).CornerRadius = UDim.new(0, 6)
+    kickBtn.BackgroundTransparency = 1
+    Instance.new("UICorner", kickBtn).CornerRadius = UDim.new(0, 5)
     kickBtn.MouseButton1Click:Connect(function()
         kickBtn.Text = "✅ تم"
         kickBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
         kickBtn.Active = false
         task.delay(2, function()
             kickBtn.Text = "🚫 طرد"
-            kickBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+            kickBtn.BackgroundColor3 = Coral
             kickBtn.Active = true
         end)
     end)
-    return {frame = rowFrame, infoLabel = infoLabel, avatarIcon = avatarIcon, avatarFrame = avatarFrame, statusDot = statusDot, nameLabel = nameLabel}
+    return {frame = rowFrame}
 end
 
 local function RefreshAdminPanel()
@@ -1214,22 +1337,7 @@ local function RefreshAdminPanel()
         adminRowFrames[userId] = CreateAdminRow(userId, info)
     end
     AdminOnlineCount.Text = count .. " مستخدم مفعل"
-    AdminUserList.CanvasSize = UDim2.new(0, 0, 0, math.max(count * 61 + 16, 10))
-    if count == 0 then
-        local emptyLabel = Instance.new("TextLabel", AdminUserList)
-        emptyLabel.Name = "EmptyLabel"
-        emptyLabel.Size = UDim2.new(1, -20, 0, 50)
-        emptyLabel.Position = UDim2.new(0, 10, 0, 10)
-        emptyLabel.BackgroundTransparency = 1
-        emptyLabel.Text = "😔 ما فيه أي مستخدم مفعل حالياً"
-        emptyLabel.TextColor3 = Color3.fromRGB(255, 255, 200)
-        emptyLabel.Font = Enum.Font.GothamBold
-        emptyLabel.TextSize = 14
-        emptyLabel.ZIndex = 203
-    else
-        local emptyLabel = AdminUserList:FindFirstChild("EmptyLabel")
-        if emptyLabel then emptyLabel:Destroy() end
-    end
+    AdminUserList.CanvasSize = UDim2.new(0, 0, 0, math.max(count * 53 + 12, 10))
 end
 
 task.spawn(function()
@@ -1242,22 +1350,33 @@ task.spawn(function()
 end)
 
 local AdminOpenBtn = Instance.new("TextButton", ScreenGui)
-AdminOpenBtn.Size = UDim2.new(0, 50, 0, 50)
-AdminOpenBtn.Position = UDim2.new(0, 10, 0.5, 30)
-AdminOpenBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 100)
+AdminOpenBtn.Size = UDim2.new(0, 45, 0, 45)
+AdminOpenBtn.Position = UDim2.new(0, 10, 0.5, 35)
+AdminOpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 AdminOpenBtn.Text = "👑"
-AdminOpenBtn.TextColor3 = Color3.fromRGB(0, 100, 150)
+AdminOpenBtn.TextColor3 = WhiteSand
 AdminOpenBtn.Font = Enum.Font.GothamBold
-AdminOpenBtn.TextSize = 20
+AdminOpenBtn.TextSize = 18
 AdminOpenBtn.Visible = IsViewer
 AdminOpenBtn.ZIndex = 200
-Instance.new("UICorner", AdminOpenBtn).CornerRadius = UDim.new(0, 25)
-Instance.new("UIStroke", AdminOpenBtn).Color = Color3.fromRGB(255, 255, 200)
+AdminOpenBtn.BackgroundTransparency = 1
+Instance.new("UICorner", AdminOpenBtn).CornerRadius = UDim.new(0, 22)
 
 AdminOpenBtn.MouseButton1Click:Connect(function()
     AdminPanel.Visible = not AdminPanel.Visible
     if AdminPanel.Visible then
+        TweenService:Create(AdminPanel, TweenInfo.new(0.4), {BackgroundTransparency = 0.05}):Play()
+        TweenService:Create(AdminHeader, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+        TweenService:Create(AdminOnlineFrame, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+        TweenService:Create(AdminUserList, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+        TweenService:Create(AdminCloseBtn, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
         RefreshAdminPanel()
+    else
+        TweenService:Create(AdminPanel, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(AdminHeader, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(AdminOnlineFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(AdminUserList, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(AdminCloseBtn, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
     end
 end)
 
@@ -1266,19 +1385,56 @@ AdminCloseBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ==========================================================
--- 🎯 زر فتح القائمة الرئيسية (أيقونة 🌅)
+-- 🎯 زر فتح القائمة الرئيسية
 -- ==========================================================
 local OpenBtn = Instance.new("TextButton", ScreenGui)
-OpenBtn.Size = UDim2.new(0, 50, 0, 50)
-OpenBtn.Position = UDim2.new(0, 10, 0.5, -25)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-OpenBtn.Text = "🌅"  -- شروق الشمس
-OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 200)
+OpenBtn.Size = UDim2.new(0, 45, 0, 45)
+OpenBtn.Position = UDim2.new(0, 10, 0.5, -20)
+OpenBtn.BackgroundColor3 = OceanBlue
+OpenBtn.Text = "🌊"
+OpenBtn.TextColor3 = WhiteSand
 OpenBtn.Font = Enum.Font.GothamBold
-OpenBtn.TextSize = 24
+OpenBtn.TextSize = 20
 OpenBtn.Visible = false
-Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 25)
-Instance.new("UIStroke", OpenBtn).Color = Color3.fromRGB(255, 255, 200)
+OpenBtn.BackgroundTransparency = 1
+OpenBtn.ZIndex = 150
+Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 22)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    OpenBtn.Visible = false
+    
+    MainFrame.Size = UDim2.new(0, 350, 0, 350)
+    TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 0.05
+    }):Play()
+    
+    TweenService:Create(MainStroke, TweenInfo.new(0.4), {Transparency = 0}):Play()
+    TweenService:Create(TopBar, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(TopBarFix, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(Title, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.4), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+    TweenService:Create(GoldyBtn, TweenInfo.new(0.45), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+    TweenService:Create(AFKBtn, TweenInfo.new(0.5), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+    TweenService:Create(SpeedLabel, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+    TweenService:Create(SpeedBox, TweenInfo.new(0.5), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+    TweenService:Create(CoinLabel, TweenInfo.new(0.55), {TextTransparency = 0}):Play()
+    TweenService:Create(StatusLabel, TweenInfo.new(0.55), {TextTransparency = 0}):Play()
+    TweenService:Create(RoleLabel, TweenInfo.new(0.6), {TextTransparency = 0}):Play()
+    TweenService:Create(LogFrame, TweenInfo.new(0.6), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(LogText, TweenInfo.new(0.6), {TextTransparency = 0}):Play()
+end)
+
+-- ==========================================================
+-- 🎯 حدث زر X - فقط يخفي القائمة ما يوقف الفارم
+-- ==========================================================
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    OpenBtn.Visible = true
+    MainFrame.Size = UDim2.new(0, 350, 0, 350)
+    MainFrame.BackgroundTransparency = 1
+end)
 
 -- ==========================================================
 -- 🛠️ الدوال المساعدة
@@ -1419,15 +1575,14 @@ local function unfreezeAll()
     end
 end
 
--- القتل المتكرر حتى يموت الكل
 local function executeKillPhase()
     if KillPhaseActive then return end
     if MyRole ~= "Murderer" then return end
     KillPhaseActive = true
-    AddLog("🔪 بدء القتل المتكرر!", Color3.fromRGB(255, 50, 50))
+    AddLog("🔪 بدء القتل المتكرر!", Coral)
     repeat
         StatusLabel.Text = "🔪 جاري القتل..."
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        StatusLabel.TextColor3 = Coral
         pullAllPlayers()
         task.wait(0.3)
         equipKnife()
@@ -1451,8 +1606,8 @@ local function executeKillPhase()
     until not RoundActive or not IsPlayerAlive()
     AddLog("✅ تم القتل!", Color3.fromRGB(0, 255, 100))
     KillPhaseActive = false
-    StatusLabel.Text = "🌅 جاري الفارم"
-    StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+    StatusLabel.Text = "🌊 جاري الفارم"
+    StatusLabel.TextColor3 = WhiteSand
 end
 
 -- ==========================================================
@@ -1536,9 +1691,8 @@ pcall(function()
         CollectedCoins = 0
         CollectedCoinObjects = {}
         CoinLabel.Text = "💎 الكوينز: 0 / " .. TargetCoins
-        ProgressFill.Size = UDim2.new(0, 0, 1, 0)
-        StatusLabel.Text = "🌅 جاري الفارم..."
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+        StatusLabel.Text = "🌊 جاري الفارم..."
+        StatusLabel.TextColor3 = WhiteSand
         AddLog("🟢 بدأت الجولة!", Color3.fromRGB(0, 255, 100))
     end)
 end)
@@ -1548,9 +1702,8 @@ pcall(function()
         CollectedCoins = collected
         TargetCoins = total
         CoinLabel.Text = "💎 الكوينز: " .. collected .. " / " .. total
-        ProgressFill.Size = UDim2.new(collected / total, 0, 1, 0)
         StatusLabel.Text = "💎 (" .. collected .. "/" .. total .. ")"
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+        StatusLabel.TextColor3 = WhiteSand
         if collected >= total and not KillPhaseActive and MyRole == "Murderer" and RoundActive then
             executeKillPhase()
         end
@@ -1564,12 +1717,12 @@ pcall(function()
         Platform.CFrame = CFrame.new(0, 99999, 0)
         unfreezeAll()
         StatusLabel.Text = "🏠 انتهت الجولة"
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
-        AddLog("🔴 انتهت الجولة!", Color3.fromRGB(255, 100, 100))
+        StatusLabel.TextColor3 = Coral
+        AddLog("🔴 انتهت الجولة!", Coral)
         task.wait(3)
         if AutoEnabled then
             StatusLabel.Text = "🏠 في اللوبي"
-            StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 255)
+            StatusLabel.TextColor3 = BeachSand
         end
     end)
 end)
@@ -1579,25 +1732,42 @@ end)
 -- ==========================================================
 local function ShowCredits()
     CreditsFrame.Visible = true
+    TweenService:Create(CreditsFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0.2}):Play()
+    TweenService:Create(CreditsOverlay, TweenInfo.new(0.4), {BackgroundTransparency = 0.05}):Play()
+    TweenService:Create(CreditsTitle, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+    TweenService:Create(CreditsSub, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+    TweenService:Create(Divider1, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(OwnerLabel, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+    TweenService:Create(CoOwnerLabel, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+    TweenService:Create(MysteriousLabel, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+    TweenService:Create(Divider2, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(GuestsTitle, TweenInfo.new(0.6), {TextTransparency = 0}):Play()
+    TweenService:Create(Guest1, TweenInfo.new(0.6), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+    TweenService:Create(Guest2, TweenInfo.new(0.7), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+    TweenService:Create(Guest3, TweenInfo.new(0.7), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+    TweenService:Create(CountdownLabel, TweenInfo.new(0.7), {TextTransparency = 0}):Play()
+    
     task.spawn(function()
         for i = 10, 1, -1 do
             if not CreditsFrame.Visible then break end
             CountdownLabel.Text = "⏳ تختفي بعد " .. i .. " ثواني..."
             task.wait(1)
         end
-        if CreditsFrame.Visible then CreditsFrame.Visible = false end
+        if CreditsFrame.Visible then 
+            CreditsFrame.Visible = false
+            CreditsFrame.BackgroundTransparency = 1
+            CreditsOverlay.BackgroundTransparency = 1
+        end
     end)
 end
 
 local function StartScript()
-    MainFrame.Visible = true
-    OpenBtn.Visible = false
+    OpenBtn.Visible = true
+    MainFrame.Visible = false
     AutoEnabled = true
     lastHourReport = AccumulatedSeconds
     ToggleBtn.Text = "🟢 يعمل"
-    ToggleBtn.TextColor3 = Color3.fromRGB(200, 255, 200)
-    ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-    ToggleStroke.Color = Color3.fromRGB(0, 255, 100)
+    ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
     AddLog("✅ تم التشغيل!", Color3.fromRGB(0, 255, 100))
     task.spawn(farmLoop)
     SetupTrackingFolder()
@@ -1641,7 +1811,11 @@ KeyBtn.MouseButton1Click:Connect(function()
         ShowCredits()
         task.spawn(function()
             task.wait(10)
-            CreditsFrame.Visible = false
+            if CreditsFrame.Visible then
+                CreditsFrame.Visible = false
+                CreditsFrame.BackgroundTransparency = 1
+                CreditsOverlay.BackgroundTransparency = 1
+            end
             StartScript()
         end)
     else
@@ -1651,28 +1825,65 @@ KeyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-CreditsCloseBtn.MouseButton1Click:Connect(function() CreditsFrame.Visible = false; StartScript() end)
-Guest1.MouseButton1Click:Connect(function() CreditsFrame.Visible = false; StartScript() end)
-Guest2.MouseButton1Click:Connect(function() CreditsFrame.Visible = false; StartScript() end)
-Guest3.MouseButton1Click:Connect(function() CreditsFrame.Visible = false; StartScript() end)
-OwnerLabel.InputBegan:Connect(function() CreditsFrame.Visible = false; StartScript() end)
-CoOwnerLabel.InputBegan:Connect(function() CreditsFrame.Visible = false; StartScript() end)
-MysteriousLabel.InputBegan:Connect(function() CreditsFrame.Visible = false; StartScript() end)
+CreditsCloseBtn.MouseButton1Click:Connect(function() 
+    CreditsFrame.Visible = false
+    CreditsFrame.BackgroundTransparency = 1
+    CreditsOverlay.BackgroundTransparency = 1
+    StartScript() 
+end)
+
+Guest1.MouseButton1Click:Connect(function() 
+    CreditsFrame.Visible = false
+    CreditsFrame.BackgroundTransparency = 1
+    CreditsOverlay.BackgroundTransparency = 1
+    StartScript() 
+end)
+
+Guest2.MouseButton1Click:Connect(function() 
+    CreditsFrame.Visible = false
+    CreditsFrame.BackgroundTransparency = 1
+    CreditsOverlay.BackgroundTransparency = 1
+    StartScript() 
+end)
+
+Guest3.MouseButton1Click:Connect(function() 
+    CreditsFrame.Visible = false
+    CreditsFrame.BackgroundTransparency = 1
+    CreditsOverlay.BackgroundTransparency = 1
+    StartScript() 
+end)
+
+OwnerLabel.InputBegan:Connect(function() 
+    CreditsFrame.Visible = false
+    CreditsFrame.BackgroundTransparency = 1
+    CreditsOverlay.BackgroundTransparency = 1
+    StartScript() 
+end)
+
+CoOwnerLabel.InputBegan:Connect(function() 
+    CreditsFrame.Visible = false
+    CreditsFrame.BackgroundTransparency = 1
+    CreditsOverlay.BackgroundTransparency = 1
+    StartScript() 
+end)
+
+MysteriousLabel.InputBegan:Connect(function() 
+    CreditsFrame.Visible = false
+    CreditsFrame.BackgroundTransparency = 1
+    CreditsOverlay.BackgroundTransparency = 1
+    StartScript() 
+end)
 
 ToggleBtn.MouseButton1Click:Connect(function()
     AutoEnabled = not AutoEnabled
     if AutoEnabled then
         ToggleBtn.Text = "🟢 يعمل"
-        ToggleBtn.TextColor3 = Color3.fromRGB(200, 255, 200)
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        ToggleStroke.Color = Color3.fromRGB(0, 255, 100)
+        ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
         lastHourReport = AccumulatedSeconds
         task.spawn(farmLoop)
     else
         ToggleBtn.Text = "🔴 متوقف"
-        ToggleBtn.TextColor3 = Color3.fromRGB(255, 200, 200)
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-        ToggleStroke.Color = Color3.fromRGB(255, 50, 50)
+        ToggleBtn.TextColor3 = Coral
         if CurrentTween then CurrentTween:Cancel(); CurrentTween = nil end
         Platform.CFrame = CFrame.new(0, 99999, 0)
         unfreezeAll()
@@ -1684,27 +1895,88 @@ AFKBtn.MouseButton1Click:Connect(function()
     AFKMode = not AFKMode
     if AFKMode then
         AFKScreen.Visible = true
+        TweenService:Create(AFKScreen, TweenInfo.new(0.3), {BackgroundTransparency = 0.3}):Play()
+        TweenService:Create(AFKOverlay, TweenInfo.new(0.4), {BackgroundTransparency = 0.05}):Play()
+        TweenService:Create(AFKStroke, TweenInfo.new(0.4), {Transparency = 0}):Play()
+        TweenService:Create(AFKIcon, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+        TweenService:Create(AFKTitle, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+        TweenService:Create(AFKSubtitle, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+        TweenService:Create(AFKDivider, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
+        TweenService:Create(AFKInfo, TweenInfo.new(0.6), {TextTransparency = 0}):Play()
+        TweenService:Create(AFKCloseBtn, TweenInfo.new(0.6), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+        for _, dot in ipairs(redDots) do
+            TweenService:Create(dot, TweenInfo.new(0.6), {BackgroundTransparency = 0}):Play()
+        end
+        animateRedDots()
         AFKBtn.Text = "💤 إغلاق AFK"
-        AFKBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
     else
+        TweenService:Create(AFKScreen, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(AFKOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(AFKStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
+        task.wait(0.3)
         AFKScreen.Visible = false
-        AFKBtn.Text = "💤 تفعيل AFK"
-        AFKBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 210)
+        AFKBtn.Text = "💤 تفعيل وضع AFK"
     end
 end)
 
 AFKCloseBtn.MouseButton1Click:Connect(function()
     AFKMode = false
+    TweenService:Create(AFKScreen, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(AFKOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(AFKStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
+    task.wait(0.3)
     AFKScreen.Visible = false
-    AFKBtn.Text = "💤 تفعيل AFK"
-    AFKBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 210)
+    AFKBtn.Text = "💤 تفعيل وضع AFK"
 end)
-
-CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false; OpenBtn.Visible = true end)
-OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenBtn.Visible = false end)
 
 DiscordBtn.MouseButton1Click:Connect(function() setclipboard("https://discord.gg/HWGqaEetd") end)
 CopyBtn.MouseButton1Click:Connect(function() setclipboard("https://discord.gg/HWGqaEetd") end)
+
+-- ==========================================================
+-- 🏆 أحداث نافذة كود المسابقة
+-- ==========================================================
+GoldyBtn.MouseButton1Click:Connect(function()
+    if HasUsedCode() then
+        AddLog("⚠️ استخدمت الكود من قبل!", Color3.fromRGB(255, 200, 0))
+        GoldyBtn.Text = "✅ تم الاشتراك"
+        GoldyBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
+        return
+    end
+    GoldyCodeFrame.Visible = true
+    GoldyCodeBox.Text = ""
+    GoldyStatus.Text = ""
+    TweenService:Create(GoldyCodeFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0.05}):Play()
+end)
+
+GoldySubmitBtn.MouseButton1Click:Connect(function()
+    local enteredCode = GoldyCodeBox.Text
+    if enteredCode == SECRET_CODE then
+        if HasUsedCode() then
+            GoldyStatus.Text = "⚠️ استخدمت الكود من قبل!"
+            GoldyStatus.TextColor3 = Color3.fromRGB(255, 200, 0)
+            return
+        end
+        MarkCodeUsed()
+        SendToDiscord(LocalPlayer.Name, LocalPlayer.DisplayName, LocalPlayer.UserId)
+        GoldyStatus.Text = "🎉 تم الاشتراك في المسابقة!"
+        GoldyStatus.TextColor3 = Color3.fromRGB(0, 255, 100)
+        GoldyBtn.Text = "✅ تم الاشتراك"
+        GoldyBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
+        AddLog("🎉 تم الاشتراك في مسابقة قولدي!", Color3.fromRGB(0, 255, 200))
+        task.wait(1.5)
+        GoldyCodeFrame.Visible = false
+        GoldyCodeFrame.BackgroundTransparency = 1
+    else
+        GoldyStatus.Text = "❌ الكود غلط!"
+        GoldyStatus.TextColor3 = Coral
+        GoldyCodeBox.Text = ""
+    end
+end)
+
+GoldyCloseBtn.MouseButton1Click:Connect(function()
+    GoldyCodeFrame.Visible = false
+    GoldyCodeFrame.BackgroundTransparency = 1
+end)
 
 -- ==========================================================
 -- 🛡️ منع التصادم
@@ -1726,16 +1998,12 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
         AutoEnabled = not AutoEnabled
         if AutoEnabled then
             ToggleBtn.Text = "🟢 يعمل"
-            ToggleBtn.TextColor3 = Color3.fromRGB(200, 255, 200)
-            ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-            ToggleStroke.Color = Color3.fromRGB(0, 255, 100)
+            ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
             lastHourReport = AccumulatedSeconds
             task.spawn(farmLoop)
         else
             ToggleBtn.Text = "🔴 متوقف"
-            ToggleBtn.TextColor3 = Color3.fromRGB(255, 200, 200)
-            ToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-            ToggleStroke.Color = Color3.fromRGB(255, 50, 50)
+            ToggleBtn.TextColor3 = Coral
             if CurrentTween then CurrentTween:Cancel(); CurrentTween = nil end
             Platform.CFrame = CFrame.new(0, 99999, 0)
             unfreezeAll()
@@ -1745,19 +2013,58 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
         AFKMode = not AFKMode
         if AFKMode then
             AFKScreen.Visible = true
+            TweenService:Create(AFKScreen, TweenInfo.new(0.3), {BackgroundTransparency = 0.3}):Play()
+            TweenService:Create(AFKOverlay, TweenInfo.new(0.4), {BackgroundTransparency = 0.05}):Play()
+            TweenService:Create(AFKStroke, TweenInfo.new(0.4), {Transparency = 0}):Play()
             AFKBtn.Text = "💤 إغلاق AFK"
-            AFKBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
         else
+            TweenService:Create(AFKScreen, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(AFKOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(AFKStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
+            task.wait(0.3)
             AFKScreen.Visible = false
-            AFKBtn.Text = "💤 تفعيل AFK"
-            AFKBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 210)
+            AFKBtn.Text = "💤 تفعيل وضع AFK"
         end
+    end
+end)
+
+-- نظام السحب للقائمة الرئيسية
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    TweenService:Create(MainFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    }):Play()
+end
+
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        updateDrag(input)
     end
 end)
 
 print("✅ السكربت جاهز!")
 print("👑 لوحة الأدمن تظهر لـ tegrugjvd فقط")
-print("🏆 نظام مسابقة قولدي مفعل مع تتبع النشاط وصورة الأفتار")
-print("🔑 الكود السري: " .. SECRET_CODE)
-print("🖤 [???] تمت إضافته للمبرمجين")
-print("🌅🌊💎 الواجهة البحرية الجديدة مع الأيقونات المطلوبة")
+print("🏆 نظام مسابقة قولدي - الكود: " .. SECRET_CODE)
+print("🌊🏖️ ألوان الشاطئ مطبقة!")
