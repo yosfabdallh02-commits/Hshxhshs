@@ -1,0 +1,33 @@
+--[[
+    سكربت دلتا - شاشة سوداء مع كلمة
+]]
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- إنشاء الشاشة السوداء
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- الخلفية السوداء
+local BlackScreen = Instance.new("Frame")
+BlackScreen.Size = UDim2.new(1, 0, 1, 0)
+BlackScreen.Position = UDim2.new(0, 0, 0, 0)
+BlackScreen.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BlackScreen.BorderSizePixel = 0
+BlackScreen.ZIndex = 999
+BlackScreen.Parent = ScreenGui
+
+-- الكلمة في النص
+local Text = Instance.new("TextLabel")
+Text.Size = UDim2.new(1, 0, 1, 0)
+Text.Position = UDim2.new(0, 0, 0, 0)
+Text.BackgroundTransparency = 1
+Text.Text = "لازممم تعرفي LUA"
+Text.TextColor3 = Color3.fromRGB(255, 255, 255)
+Text.TextSize = 30
+Text.Font = Enum.Font.GothamBold
+Text.ZIndex = 1000
+Text.Parent = ScreenGui
